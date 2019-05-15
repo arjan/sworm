@@ -1,6 +1,15 @@
 # Sworm
 
-**TODO: Add description**
+A combination of a global, distributed process registry and
+supervisor, rolled into one, friendly API.
+
+This library aims to be a drop-in replacement for
+[Swarm](https://github.com/bitwalker/swarm), but it is built on top of
+[Horde](https://github.com/derekkraan/horde).
+
+
+Sworms can be defined using a macro and then added to your supervision
+tree.
 
 ## Installation
 
@@ -18,4 +27,3 @@ end
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at [https://hexdocs.pm/sworm](https://hexdocs.pm/sworm).
-

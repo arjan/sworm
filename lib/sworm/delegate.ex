@@ -1,4 +1,6 @@
 defmodule Sworm.Delegate do
+  @moduledoc false
+
   use GenServer
   import Sworm.Util
   require Logger

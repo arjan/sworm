@@ -1,10 +1,12 @@
 defmodule Sworm.Main do
+  @moduledoc false
+
   import Sworm.Util
 
   def child_spec(sworm, opts) do
     %{
       id: sworm,
-      start: {Sworm.Supervisor, :start_link, {sworm, opts}},
+      start: {Sworm.Supervisor, :start_link, [sworm, opts]},
       restart: :permanent,
       shutdown: 5000,
       type: :supervisor

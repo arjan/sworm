@@ -1,4 +1,6 @@
 defmodule Sworm.Manager do
+  @moduledoc false
+
   use GenServer
 
   import Sworm.Util

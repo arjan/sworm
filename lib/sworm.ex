@@ -8,13 +8,13 @@ defmodule Sworm do
 
   """
 
+  alias Sworm.Main
+
   @doc """
   Create a child specification for adding a new Sworm to the supervisor tree.
   """
   @spec child_spec(sworm :: atom(), opts :: [term()]) :: Supervisor.child_spec()
   defdelegate child_spec(sworm, opts \\ []), to: Main
-
-  alias Sworm.Main
 
   @doc """
   Register a name in the given Sworm. This function takes a
@@ -60,4 +60,6 @@ defmodule Sworm do
   """
   @spec registered(sworm :: atom()) :: [{name :: term(), pid()}]
   defdelegate registered(sworm), to: Main
+
+  defmacro __using__(opts), do: Sworm.Macro.using(opts)
 end

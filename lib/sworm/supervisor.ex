@@ -1,9 +1,10 @@
 defmodule Sworm.Supervisor do
+  @moduledoc false
   @behaviour Supervisor
 
   import Sworm.Util
 
-  def start_link({sworm, opts}) do
+  def start_link(sworm, opts) do
     Supervisor.start_link(__MODULE__, {sworm, opts}, name: sworm)
   end
 
