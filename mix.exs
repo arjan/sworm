@@ -5,7 +5,7 @@ defmodule Sworm.MixProject do
     [
       app: :sworm,
       version: File.read!("VERSION"),
-      elixir: "~> 1.8",
+      elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
