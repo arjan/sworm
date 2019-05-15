@@ -49,25 +49,12 @@ defmodule SwormTest do
     assert :y = GenServer.call(worker, :x)
   end
 
-  defmodule MySworm do
-    use Sworm
-  end
+  test "join / leave / members" do
+    {:ok, _pid} = Sworm.Supervisor.start_link(Sworm3, [])
+    assert [] = Sworm.members(Sworm3, "group1")
+    assert {:ok, worker} = Sworm.register_name(Sworm3, "a", TestServer, :start_link, [])
 
-  test "using" do
-    # start it
-    assert %{start: {m, f, a}} = MySworm.child_spec([])
-    {:ok, _pid} = apply(m, f, a)
-
-    assert [] = MySworm.registered()
-
-    assert :undefined = MySworm.whereis_name("test")
-
-    worker = MySworm.whereis_or_register_name("test", TestServer, :start_link, [])
-    assert is_pid(worker)
-
-    assert ^worker = MySworm.whereis_name("test")
-
-    assert [{"test", ^worker}] = MySworm.registered()
-    assert :y = GenServer.call(worker, :x)
+    Sworm.join(Sworm3, "group1", worker)
+    assert [^worker] = Sworm.members(Sworm3, "group1")
   end
 end

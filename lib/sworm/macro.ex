@@ -1,19 +1,10 @@
 defmodule Sworm.Macro do
   @moduledoc false
 
-  @public_api [
-    child_spec: 1,
-    register_name: 4,
-    whereis_or_register_name: 4,
-    unregister_name: 1,
-    whereis_name: 1,
-    registered: 0
-  ]
-
   def using(_opts) do
-    @public_api
+    Sworm.__info__(:functions)
     |> Enum.map(fn {name, arity} ->
-      args = make_args(arity)
+      args = make_args(arity - 1)
 
       quote do
         def unquote(name)(unquote_splicing(args)) do

@@ -61,5 +61,23 @@ defmodule Sworm do
   @spec registered(sworm :: atom()) :: [{name :: term(), pid()}]
   defdelegate registered(sworm), to: Main
 
+  @doc """
+  Joins a process to a group
+  """
+  @spec join(sworm :: atom(), term(), pid()) :: :ok
+  defdelegate join(sworm, group, pid \\ self()), to: Main
+
+  @doc """
+  Removes a process from a group
+  """
+  @spec leave(sworm :: atom(), term(), pid()) :: :ok
+  defdelegate leave(sworm, group, pid \\ self()), to: Main
+
+  @doc """
+  Gets all the members of a group. Returns a list of pids.
+  """
+  @spec members(sworm :: atom(), term()) :: [pid]
+  defdelegate members(sworm, group), to: Main
+
   defmacro __using__(opts), do: Sworm.Macro.using(opts)
 end

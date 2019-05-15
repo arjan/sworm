@@ -39,13 +39,46 @@ defmodule Sworm.Main do
   end
 
   def whereis_name(sworm, name) do
-    with [{_delegate, worker_pid}] <- Horde.Registry.lookup(registry_name(sworm), name) do
+    with [{_delegate, worker_pid}] <- lookup(sworm, {:delegate, name}) do
       worker_pid
     end
   end
 
   def registered(sworm) do
-    Horde.Registry.processes(registry_name(sworm))
-    |> Enum.map(fn {name, {_delegate_pid, worker_pid}} -> {name, worker_pid} end)
+    for {{:delegate, name}, {delegate_pid, worker_pid}} <-
+          Horde.Registry.processes(registry_name(sworm)) do
+      {name, worker_pid}
+    end
+  end
+
+  def members(sworm, group) do
+    for {{:group, ^group}, {_delegate_pid, worker_pid}} <-
+          Horde.Registry.processes(registry_name(sworm)) do
+      worker_pid
+    end
+  end
+
+  def join(sworm, group, worker \\ self()) do
+    with [{delegate_pid, nil}] <- lookup(sworm, {:worker, worker}) do
+      GenServer.call(delegate_pid, {:join, group})
+    end
+  end
+
+  def leave(sworm, group, worker \\ self()) do
+    with [{delegate_pid, nil}] <- lookup(sworm, {:worker, worker}) do
+      GenServer.call(delegate_pid, {:leave, group})
+    end
+  end
+
+  ###
+
+  defp delegate_pid(sworm, worker) do
+    with [{delegate, nil}] <- lookup(sworm, {:worker, worker}) do
+      IO.inspect(delegate, label: "delegate")
+    end
+  end
+
+  defp lookup(sworm, key) do
+    Horde.Registry.lookup(registry_name(sworm), key)
   end
 end
