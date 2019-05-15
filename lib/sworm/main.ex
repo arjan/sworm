@@ -45,7 +45,7 @@ defmodule Sworm.Main do
   end
 
   def registered(sworm) do
-    for {{:delegate, name}, {delegate_pid, worker_pid}} <-
+    for {{:delegate, name}, {_delegate_pid, worker_pid}} <-
           Horde.Registry.processes(registry_name(sworm)) do
       {name, worker_pid}
     end
@@ -71,12 +71,6 @@ defmodule Sworm.Main do
   end
 
   ###
-
-  defp delegate_pid(sworm, worker) do
-    with [{delegate, nil}] <- lookup(sworm, {:worker, worker}) do
-      IO.inspect(delegate, label: "delegate")
-    end
-  end
 
   defp lookup(sworm, key) do
     Horde.Registry.lookup(registry_name(sworm), key)

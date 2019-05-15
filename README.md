@@ -1,5 +1,7 @@
 # Sworm
 
+[![Build Status](https://travis-ci.org/arjan/sworm.svg?branch=master)](https://travis-ci.org/arjan/sworm)
+
 A combination of a global, distributed process registry and
 supervisor, rolled into one, friendly API.
 
