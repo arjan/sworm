@@ -9,8 +9,8 @@ defmodule Sworm.MacroTest do
     use GenServer
     alias Sworm.MacroTest.MySworm
 
-    def start_link() do
-      GenServer.start_link(__MODULE__, [])
+    def start_link(opts \\ []) do
+      GenServer.start_link(__MODULE__, [], opts)
     end
 
     def init([]), do: {:ok, nil}
@@ -25,8 +25,8 @@ defmodule Sworm.MacroTest do
       {:reply, :ok, state}
     end
 
-    def handle_call(:x, _from, state) do
-      {:reply, :y, state}
+    def handle_call(:ping, _from, state) do
+      {:reply, :pong, state}
     end
   end
 
@@ -54,7 +54,7 @@ defmodule Sworm.MacroTest do
     assert ^worker = MySworm.whereis_name("test")
 
     assert [{"test", ^worker}] = MySworm.registered()
-    assert :y = GenServer.call(worker, :x)
+    assert :pong = GenServer.call(worker, :ping)
 
     assert [] = MySworm.members("group0")
     :ok = GenServer.call(worker, {:join, "group0"})
@@ -70,5 +70,12 @@ defmodule Sworm.MacroTest do
     # assert :yes = MySworm.register_name("hello1")
     pid = self()
     assert [{"hello", ^pid}] = MySworm.registered()
+  end
+
+  test "via tuple" do
+    name = {:via, MySworm, "test_server"}
+    {:ok, pid} = TestServer.start_link(name: name)
+    assert [{"test_server", ^pid}] = MySworm.registered()
+    assert :pong = GenServer.call(name, :ping)
   end
 end
