@@ -27,6 +27,13 @@ defmodule Sworm.Main do
     end
   end
 
+  def register_name(sworm, name, pid \\ self()) do
+    case Sworm.Delegate.start(sworm, name, pid) do
+      {:ok, _} -> :yes
+      {:error, _} -> :no
+    end
+  end
+
   def whereis_or_register_name(sworm, name, m, f, a) do
     with :undefined <- whereis_name(sworm, name),
          {:ok, pid} <- register_name(sworm, name, m, f, a) do

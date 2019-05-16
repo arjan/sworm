@@ -5,8 +5,12 @@ defmodule Sworm.Delegate do
   import Sworm.Util
   require Logger
 
-  def start_link(sworm, name, mfa) do
-    GenServer.start_link(__MODULE__, {sworm, name, mfa}, [])
+  def start_link(sworm, name, mfa_or_pid) do
+    GenServer.start_link(__MODULE__, {sworm, name, mfa_or_pid}, [])
+  end
+
+  def start(sworm, name, mfa_or_pid) do
+    GenServer.start(__MODULE__, {sworm, name, mfa_or_pid}, [])
   end
 
   ###
@@ -15,8 +19,13 @@ defmodule Sworm.Delegate do
     defstruct [:pid, :sworm]
   end
 
-  def init({sworm, name, {m, f, a}}) do
-    {:ok, pid} = apply(m, f, a)
+  def init({sworm, name, mfa_or_pid}) do
+    {:ok, pid} =
+      case mfa_or_pid do
+        {m, f, a} -> apply(m, f, a)
+        pid when is_pid(pid) -> {:ok, pid}
+      end
+
     Process.monitor(pid)
     Horde.Registry.register(registry_name(sworm), {:delegate, name}, pid)
     Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
@@ -37,9 +46,12 @@ defmodule Sworm.Delegate do
     {:reply, :ok, state}
   end
 
-  def handle_info(message, state) do
-    Logger.info("Got: #{inspect(message)}")
+  def handle_info({:DOWN, _ref, :process, pid, _reason}, %State{pid: pid} = state) do
+    {:stop, :normal, state}
+  end
 
+  def handle_info(message, state) do
+    Logger.debug("Got unexpected info message: #{inspect(message)}")
     {:noreply, state}
   end
 end

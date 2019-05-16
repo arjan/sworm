@@ -30,11 +30,20 @@ defmodule Sworm.MacroTest do
     end
   end
 
-  test "using" do
+  setup do
     # start it
     assert %{start: {m, f, a}} = MySworm.child_spec([])
-    {:ok, _pid} = apply(m, f, a)
+    {:ok, pid} = apply(m, f, a)
 
+    on_exit(fn ->
+      Process.sleep(50)
+      Process.exit(pid, :normal)
+    end)
+
+    :ok
+  end
+
+  test "using" do
     assert [] = MySworm.registered()
 
     assert :undefined = MySworm.whereis_name("test")
@@ -52,5 +61,14 @@ defmodule Sworm.MacroTest do
     assert [^worker] = MySworm.members("group0")
     :ok = GenServer.call(worker, {:leave, "group0"})
     assert [] = MySworm.members("group0")
+  end
+
+  test "register_name/1" do
+    assert [] = MySworm.registered()
+
+    assert :yes = MySworm.register_name("hello")
+    # assert :yes = MySworm.register_name("hello1")
+    pid = self()
+    assert [{"hello", ^pid}] = MySworm.registered()
   end
 end

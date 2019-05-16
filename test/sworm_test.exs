@@ -57,4 +57,24 @@ defmodule SwormTest do
     Sworm.join(Sworm3, "group1", worker)
     assert [^worker] = Sworm.members(Sworm3, "group1")
   end
+
+  defmodule NameTestServer do
+    def init(name) do
+      :yes = Sworm.register_name(Sworm4, name)
+      {:ok, nil}
+    end
+  end
+
+  test "register_name/2" do
+    {:ok, _pid} = Sworm.Supervisor.start_link(Sworm4, [])
+    {:ok, _} = GenServer.start_link(NameTestServer, "a", [])
+    {:ok, b} = GenServer.start_link(NameTestServer, "b", [])
+
+    assert [{"a", _}, {"b", _}] = Sworm.registered(Sworm4)
+
+    GenServer.stop(b)
+    Process.sleep(100)
+
+    assert [{"a", _}] = Sworm.registered(Sworm4)
+  end
 end

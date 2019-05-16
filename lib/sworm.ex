@@ -21,6 +21,11 @@ defmodule Sworm do
   module/function/args triplet, and starts the process, registers the
   pid with the given name, and handles cluster topology changes by
   restarting the process on its new node using the given MFA.
+
+  Processes that are started this way are added to the Sworm's dynamic
+  Horde supervisor, distributed over the members of the Horde
+  according to its cluster strategy, and restarted when they crash.
+
   """
   @spec register_name(
           sworm :: atom(),
@@ -32,7 +37,18 @@ defmodule Sworm do
   defdelegate register_name(sworm, name, m, f, a), to: Main
 
   @doc """
-   Either finds the named process in the sworm or registers it using the register function.
+  Registers the given name to the given process. Names
+  registered this way will not be shifted when the cluster
+  topology changes, and are not restarted by Sworm.
+
+  If no pid is given, `self()` is used for the registration.
+  """
+  @spec register_name(sworm :: atom(), name :: term(), pid :: pid()) :: :yes | :no
+  defdelegate register_name(sworm, name, pid \\ self()), to: Main
+
+  @doc """
+  Either finds the named process in the sworm or registers it using
+  the ``register/4`` function.
   """
   @spec whereis_or_register_name(
           sworm :: atom(),
