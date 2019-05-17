@@ -4,7 +4,6 @@ defmodule Sworm.Manager do
   use GenServer
 
   import Sworm.Util
-  alias Sworm.RingUtils
 
   def child_spec({sworm, opts}) do
     %{
@@ -55,7 +54,7 @@ defmodule Sworm.Manager do
         state
 
       false ->
-        Logger.debug("**** Node list updated to #{inspect(nodes)}")
+        Logger.info("**** Node list updated to #{inspect(nodes)}")
 
         for mod <- [supervisor_name(state.sworm), registry_name(state.sworm)] do
           Horde.Cluster.set_members(mod, Enum.map(nodes, fn node -> {mod, node} end))
@@ -63,18 +62,5 @@ defmodule Sworm.Manager do
 
         %State{state | nodes: nodes}
     end
-  end
-
-  @global_blacklist [~r/^remsh.*$/, ~r/^.+_upgrader_.+$/, ~r/^.+_maint_.+$/]
-
-  # Determine if a node should be ignored, even if connected
-  # The whitelist and blacklist can contain literal strings, regexes, or regex strings
-  # By default, all nodes are allowed, except those which are remote shell sessions
-  # where the node name of the remote shell starts with `remsh` (relx, exrm, and distillery)
-  # all use that prefix for remote shells.
-  defp ignore_node?(node, opts) do
-    blacklist = Enum.uniq(@global_blacklist ++ (opts[:node_blacklist] || []))
-    whitelist = opts[:node_whitelist] || []
-    RingUtils.ignore_node?(node, blacklist, whitelist)
   end
 end
