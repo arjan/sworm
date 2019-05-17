@@ -21,7 +21,7 @@ defmodule Sworm.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:horde, "~> 0.5"}
+      {:horde, github: "arjan/horde", branch: "name-conflict-messages-fix"}
     ]
   end
 end

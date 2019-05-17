@@ -28,7 +28,13 @@ defmodule Sworm.Main do
   end
 
   def register_name(sworm, name, pid \\ self()) do
-    case Sworm.Delegate.start(sworm, name, pid) do
+    reply =
+      case lookup(sworm, {:worker, pid}) do
+        :undefined -> Sworm.Delegate.start(sworm, name, pid)
+        [{delegate, nil}] -> GenServer.call(delegate, {:register_name, name})
+      end
+
+    case reply do
       {:ok, _} -> :yes
       {:error, _} -> :no
     end
@@ -52,17 +58,13 @@ defmodule Sworm.Main do
   end
 
   def registered(sworm) do
-    for {{:delegate, name}, {_delegate_pid, worker_pid}} <-
-          Horde.Registry.processes(registry_name(sworm)) do
-      {name, worker_pid}
-    end
+    match = [{{{:delegate, :"$1"}, :"$2", :"$3"}, [], [{{:"$1", :"$3"}}]}]
+    Horde.Registry.select(registry_name(sworm), match)
   end
 
   def members(sworm, group) do
-    for {{:group, ^group}, {_delegate_pid, worker_pid}} <-
-          Horde.Registry.processes(registry_name(sworm)) do
-      worker_pid
-    end
+    match = [{{{:group, group}, :"$2", :"$3"}, [], [:"$3"]}]
+    Horde.Registry.select(registry_name(sworm), match)
   end
 
   def join(sworm, group, worker \\ self()) do

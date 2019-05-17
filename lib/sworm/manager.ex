@@ -26,14 +26,12 @@ defmodule Sworm.Manager do
   end
 
   def init(sworm) do
-    Logger.info("**** Starting manager")
     :net_kernel.monitor_nodes(true, [])
     Process.flag(:trap_exit, true)
     {:ok, %State{sworm: sworm, nodes: update_nodes(sworm)}}
   end
 
   def handle_info({:EXIT, _pid, reason}, state) do
-    Logger.info("**** Tracker received exit because #{inspect(reason)}")
     {:stop, reason, state}
   end
 
@@ -44,18 +42,16 @@ defmodule Sworm.Manager do
   end
 
   def handle_info(request, state) do
-    Logger.warn("Unexpected message in tracker: #{inspect(request)}")
     {:noreply, state}
   end
 
   def terminate(reason, _state) do
-    Logger.info("**** Terminating tracker due to #{inspect(reason)}")
     :ok
   end
 
   def update_nodes(sworm) do
     nodes = Enum.sort([Node.self() | Node.list()])
-    Logger.info("**** Node list updated to #{inspect(nodes)}")
+    Logger.debug("**** Node list updated to #{inspect(nodes)}")
 
     for mod <- [supervisor_name(sworm), registry_name(sworm)] do
       Horde.Cluster.set_members(mod, Enum.map(nodes, fn node -> {mod, node} end))

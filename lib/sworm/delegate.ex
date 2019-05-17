@@ -36,6 +36,11 @@ defmodule Sworm.Delegate do
     {:reply, {:ok, state.pid}, state}
   end
 
+  def handle_call({:register_name, name}, _from, state) do
+    reply = Horde.Registry.register(registry_name(state.sworm), {:delegate, name}, state.pid)
+    {:reply, reply, state}
+  end
+
   def handle_call({:join, group}, _from, state) do
     {:ok, _} = Horde.Registry.register(registry_name(state.sworm), {:group, group}, state.pid)
     {:reply, :ok, state}
@@ -50,8 +55,16 @@ defmodule Sworm.Delegate do
     {:stop, :normal, state}
   end
 
+  def handle_info({:EXIT, _, :shutdown}, state) do
+    {:stop, :shutdown, state}
+  end
+
+  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner} = r}, state) do
+    {:stop, :normal, state}
+  end
+
   def handle_info(message, state) do
-    Logger.debug("Got unexpected info message: #{inspect(message)}")
+    Logger.info("#{inspect(self)} Got unexpected info message: #{inspect(message)}")
     {:noreply, state}
   end
 end
