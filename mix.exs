@@ -21,7 +21,9 @@ defmodule Sworm.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:horde, github: "arjan/horde", branch: "name-conflict-messages-fix"}
+      {:horde, github: "derekkraan/horde", branch: "master"},
+      {:ex_unit_clustered_case,
+       github: "xinz/ex_unit_clustered_case", branch: "master", only: :test}
     ]
   end
 end

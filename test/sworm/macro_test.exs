@@ -32,8 +32,7 @@ defmodule Sworm.MacroTest do
 
   setup do
     # start it
-    assert %{start: {m, f, a}} = MySworm.child_spec([])
-    {:ok, pid} = apply(m, f, a)
+    {:ok, pid} = MySworm.start_link()
 
     on_exit(fn ->
       Process.sleep(50)
@@ -77,5 +76,14 @@ defmodule Sworm.MacroTest do
     {:ok, pid} = TestServer.start_link(name: name)
     assert [{"test_server", ^pid}] = MySworm.registered()
     assert :pong = GenServer.call(name, :ping)
+  end
+
+  defmodule AnotherSworm do
+    use Sworm
+  end
+
+  test "start/0" do
+    assert {:ok, _} = AnotherSworm.start_link()
+    assert [] = AnotherSworm.registered()
   end
 end

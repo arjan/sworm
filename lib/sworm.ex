@@ -17,6 +17,16 @@ defmodule Sworm do
   defdelegate child_spec(sworm, opts \\ []), to: Main
 
   @doc """
+  Start and link a Sworm in a standalone fashion.
+
+  > You almost will never need this function, as it is more usual to
+  > start a Sworm directly in a supervisor tree, using the provided
+  > child_spec function.
+  """
+  @spec child_spec(sworm :: atom(), opts :: [term()]) :: {:ok, pid()}
+  defdelegate start_link(sworm, opts \\ []), to: Main
+
+  @doc """
   Register a name in the given Sworm. This function takes a
   module/function/args triplet, and starts the process, registers the
   pid with the given name, and handles cluster topology changes by

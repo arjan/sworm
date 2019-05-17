@@ -13,6 +13,11 @@ defmodule Sworm.Main do
     }
   end
 
+  def start_link(sworm, opts \\ []) do
+    %{start: {m, f, a}} = child_spec(sworm, opts)
+    {:ok, _} = apply(m, f, a)
+  end
+
   def register_name(sworm, name, m, f, a) do
     spec = %{
       id: name,

@@ -134,8 +134,7 @@ defmodule SwormTest do
   ###
 
   defp sworm(name) do
-    assert %{start: {m, f, a}} = Sworm.child_spec(name, [])
-    {:ok, pid} = apply(m, f, a)
+    {:ok, pid} = Sworm.start_link(name)
 
     on_exit(fn ->
       Process.sleep(50)
