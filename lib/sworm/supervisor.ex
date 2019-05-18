@@ -3,18 +3,10 @@ defmodule Sworm.Supervisor do
   @behaviour Supervisor
 
   require Logger
-
   import Sworm.Util
 
   def start_link(sworm, opts) do
-    case ignore_node?(node(), opts) do
-      true ->
-        Logger.info("Not starting #{sworm} on #{node()}")
-        :ignore
-
-      false ->
-        Supervisor.start_link(__MODULE__, {sworm, opts}, name: sworm)
-    end
+    Supervisor.start_link(__MODULE__, {sworm, opts}, name: sworm)
   end
 
   @impl true

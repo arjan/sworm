@@ -58,30 +58,4 @@ defmodule SwormClusterTest do
                Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
     end
   end
-
-  @nodes [
-    [name: :"a@127.0.0.1"],
-    [name: :"b@127.0.0.1"],
-    [name: :"c@127.0.0.1"]
-  ]
-
-  scenario "given a cluster with a node blacklist",
-    nodes: @nodes,
-    boot_timeout: 20_000,
-    stdout: :standard_error do
-    node_setup do
-      #      {:ok, pid} = Swurm.start_link()
-      with {:ok, pid} <- Swurm.start_link(node_blacklist: ["c@127.0.0.1"]) do
-        Process.unlink(pid)
-      end
-
-      :ok
-    end
-
-    test "Sworm not started on ignored node", %{
-      cluster: _c
-    } do
-      assert {:exit, {:noproc, _}} = Cluster.call(:"c@127.0.0.1", Swurm, :start_one, ["hi"])
-    end
-  end
 end

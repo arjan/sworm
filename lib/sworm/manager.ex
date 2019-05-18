@@ -40,14 +40,12 @@ defmodule Sworm.Manager do
     {:noreply, state}
   end
 
-  def terminate(reason, _state) do
+  def terminate(_reason, _state) do
     :ok
   end
 
   def update_nodes(state) do
-    nodes =
-      Enum.sort([Node.self() | Node.list()])
-      |> Enum.filter(fn node -> !ignore_node?(node, state.opts) end)
+    nodes = Enum.sort([Node.self() | Node.list()])
 
     case nodes == state.nodes do
       true ->
