@@ -59,12 +59,12 @@ defmodule Sworm.Delegate do
     {:stop, :shutdown, state}
   end
 
-  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner} = r}, state) do
+  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner}}, state) do
     {:stop, :normal, state}
   end
 
   def handle_info(message, state) do
-    Logger.info("#{inspect(self)} Got unexpected info message: #{inspect(message)}")
+    Logger.info("Delegate #{inspect(self())} Got unexpected info message: #{inspect(message)}")
     {:noreply, state}
   end
 end
