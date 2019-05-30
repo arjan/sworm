@@ -33,6 +33,8 @@ in-lirbary, "singleton" process tree, you will need to add each
 
 Now you can call `Swarm.registered()`, `Swarm.register_name` etc like you're used to.
 
+> Note: handoff still needs to be implemented, see issue #1.
+
 
 ## Installation
 
