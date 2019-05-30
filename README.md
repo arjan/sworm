@@ -36,6 +36,24 @@ Now you can call `Swarm.registered()`, `Swarm.register_name` etc like you're use
 > Note: handoff still needs to be implemented, see issue #1.
 
 
+## Architecture
+
+Sworm combines Horde's DynamicSupervisor and Registry modules to
+reproduce the Swarm library.
+
+To be able to register an aribtrary `{m, f, a}` specification with
+Sworm, it spawns a *delegate process* and uses this process as the
+primary process for name registration and supervision. This delegate
+process then spawns and links the actual process as specified in the
+MFA.
+
+This way, any MFA can be used with Sworm like it can with Swarm, and
+does not need to be aware of it, because the delegate process handles
+name registration, process shutdown on name conflicts, and, in the
+near future, process handoff.
+
+
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
