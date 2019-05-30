@@ -27,9 +27,14 @@ defmodule Sworm.Delegate do
       end
 
     Process.monitor(pid)
-    Horde.Registry.register(registry_name(sworm), {:delegate, name}, pid)
-    Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
-    {:ok, %State{pid: pid, sworm: sworm}}
+
+    with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, pid) do
+      Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
+      {:ok, %State{pid: pid, sworm: sworm}}
+    else
+      {:error, {:already_registered, _}} ->
+        :ignore
+    end
   end
 
   def handle_call(:get_worker_pid, _from, state) do

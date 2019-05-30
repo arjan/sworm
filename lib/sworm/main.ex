@@ -19,16 +19,21 @@ defmodule Sworm.Main do
   end
 
   def register_name(sworm, name, m, f, a) do
-    spec = %{
-      id: name,
-      start: {Sworm.Delegate, :start_link, [sworm, name, {m, f, a}]},
-      type: :worker,
-      restart: :transient,
-      shutdown: 5000
-    }
+    with :undefined <- whereis_name(sworm, name) do
+      spec = %{
+        id: name,
+        start: {Sworm.Delegate, :start_link, [sworm, name, {m, f, a}]},
+        type: :worker,
+        restart: :transient,
+        shutdown: 5000
+      }
 
-    with {:ok, delegate_pid} <- Horde.Supervisor.start_child(supervisor_name(sworm), spec) do
-      GenServer.call(delegate_pid, :get_worker_pid)
+      with {:ok, delegate_pid} <- Horde.Supervisor.start_child(supervisor_name(sworm), spec) do
+        GenServer.call(delegate_pid, :get_worker_pid)
+      end
+    else
+      pid ->
+        {:error, {:already_started, pid}}
     end
   end
 
@@ -53,7 +58,13 @@ defmodule Sworm.Main do
   end
 
   def unregister_name(sworm, name) do
-    Horde.Supervisor.terminate_child(supervisor_name(sworm), name)
+    case lookup(sworm, {:delegate, name}) do
+      [{delegate, _worker}] ->
+        Horde.Supervisor.terminate_child(supervisor_name(sworm), delegate)
+
+      _ ->
+        {:error, :not_found}
+    end
   end
 
   def whereis_name(sworm, name) do
