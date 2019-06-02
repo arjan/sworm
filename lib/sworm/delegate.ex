@@ -32,7 +32,8 @@ defmodule Sworm.Delegate do
       Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
       {:ok, %State{pid: pid, sworm: sworm}}
     else
-      {:error, {:already_registered, _}} ->
+      {:error, {:already_registered, pid}} ->
+        Logger.warn("already registered :#{inspect(name)}, to #{inspect(pid)}, bail out")
         :ignore
     end
   end

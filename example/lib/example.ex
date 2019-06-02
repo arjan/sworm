@@ -7,8 +7,6 @@ defmodule Example do
     end
 
     def init(a) do
-      IO.inspect(node(), label: "---- node()")
-
       {:ok, a}
     end
   end
