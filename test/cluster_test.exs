@@ -87,7 +87,10 @@ defmodule SwormClusterTest do
       n = Cluster.random_member(c)
       Cluster.call(n, Swurm, :start_one, ["hi"])
 
-      Process.sleep(300)
+      wait_until(fn ->
+        match?([_], Cluster.call(n, Swurm, :registered, []))
+      end)
+
       [{"hi", pid}] = Cluster.call(n, Swurm, :registered, [])
 
       target_node = node(pid)
