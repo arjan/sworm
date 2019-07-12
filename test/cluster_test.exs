@@ -93,7 +93,9 @@ defmodule SwormClusterTest do
       target_node = node(pid)
       [other_node] = Cluster.members(c) -- [target_node]
 
-      [{"hi", ^pid}] = Cluster.call(other_node, Swurm, :registered, [])
+      wait_until(fn ->
+        [{"hi", pid}] == Cluster.call(other_node, Swurm, :registered, [])
+      end)
 
       Cluster.stop_node(c, target_node)
 
