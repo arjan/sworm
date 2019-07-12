@@ -21,11 +21,14 @@ end
 defmodule SwormClusterTest do
   use ExUnit.ClusteredCase
 
+  import Sworm.Support.Helpers
+
   scenario "given a healthy cluster",
     cluster_size: 2,
     boot_timeout: 20_000,
     stdout: :standard_error do
     node_setup do
+      {:ok, _} = Application.ensure_all_started(:telemetry)
       {:ok, pid} = Swurm.start_link()
       Process.unlink(pid)
 
@@ -44,18 +47,25 @@ defmodule SwormClusterTest do
       Cluster.call(n, Swurm, :start_one, ["hi"])
 
       # settle
-      Process.sleep(200)
+      wait_until(fn ->
+        match?(
+          [[{"hi", _}], [{"hi", _}]],
+          Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
+        )
+      end)
 
-      assert [[{"hi", p}], [{"hi", p}]] =
-               Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
+      # now stop it
+      [[{"hi", p}] | _] =
+        Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
 
       GenServer.stop(p)
 
       # settle
-      Process.sleep(200)
 
-      assert [[], []] =
-               Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
+      wait_until(fn ->
+        [[], []] ==
+          Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
+      end)
     end
   end
 
@@ -64,6 +74,7 @@ defmodule SwormClusterTest do
     boot_timeout: 20_000,
     stdout: :standard_error do
     node_setup do
+      {:ok, _} = Application.ensure_all_started(:horde)
       {:ok, pid} = Swurm.start_link()
       Process.unlink(pid)
 
@@ -76,7 +87,7 @@ defmodule SwormClusterTest do
       n = Cluster.random_member(c)
       Cluster.call(n, Swurm, :start_one, ["hi"])
 
-      Process.sleep(100)
+      Process.sleep(300)
       [{"hi", pid}] = Cluster.call(n, Swurm, :registered, [])
 
       target_node = node(pid)
@@ -84,16 +95,14 @@ defmodule SwormClusterTest do
 
       [{"hi", ^pid}] = Cluster.call(other_node, Swurm, :registered, [])
 
-      Cluster.call(target_node, :init, :stop, [])
+      Cluster.stop_node(c, target_node)
 
-      Process.sleep(2_000)
-      # it should be down
-      assert :pang = Node.ping(target_node)
+      wait_until(fn ->
+        [{"hi", pid}] = Cluster.call(other_node, Swurm, :registered, [])
 
-      [{"hi", pid}] = Cluster.call(other_node, Swurm, :registered, [])
-
-      # process now runs on the other node
-      assert node(pid) == other_node
+        # process now runs on the other node
+        node(pid) == other_node
+      end)
     end
   end
 end

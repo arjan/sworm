@@ -7,6 +7,7 @@ defmodule Sworm.MixProject do
       version: File.read!("VERSION"),
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
+      elixirc_paths: elixirc_paths(Mix.env()),
       deps: deps()
     ]
   end
@@ -21,10 +22,13 @@ defmodule Sworm.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:horde, github: "derekkraan/horde", branch: "master"},
+      {:horde, "~> 0.6"},
       # {:horde, path: "../horde"},
       {:ex_unit_clustered_case,
-       github: "xinz/ex_unit_clustered_case", branch: "master", only: :test}
+       github: "arjan/ex_unit_clustered_case", branch: "feature/manual-stop", only: :test}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end
