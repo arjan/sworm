@@ -29,7 +29,7 @@ defmodule Sworm.DirectoryManager do
     {:noreply, update_nodes(state)}
   end
 
-  def handle_info(request, state) do
+  def handle_info(_request, state) do
     {:noreply, state}
   end
 

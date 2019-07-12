@@ -1,10 +1,29 @@
 defmodule Sworm do
   @moduledoc """
-  Documentation for Sworm.
-
-  Sworm takes the API from
+  Sworm takes the accessible API from
   [Swarm](https://github.com/bitwalker/swarm), and combines it with
   the robustness of [Horde](https://github.com/derekkraan/horde).
+
+  It strives to be a combination of a global, distributed process
+  registry and supervisor, accessible through a friendly API.
+
+  ## Usage
+
+  The concept behind Sworm is that there can be multiple, distinct
+  "sworms" living inside a cluster of BEAM nodes. To define a Sworm,
+  you define a module like this:
+
+      defmodule MyProcesses do
+        use Sworm
+      end
+
+  Now, the `MyProcesses` module must be added to your application's supervison tree.
+
+  When you now start the application, you can use the functions from
+  the `Sworm` module inside your `MyProcesses` module:
+
+      {:ok, pid} = MyProcesses.register_name("my worker", MyWorker, :start_link, [arg1, arg2])
+
 
   """
 

@@ -22,6 +22,7 @@ defmodule Sworm.Manager do
   require Logger
 
   defmodule State do
+    @moduledoc false
     defstruct sworm: nil, nodes: [], opts: []
   end
 

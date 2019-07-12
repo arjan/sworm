@@ -12,6 +12,7 @@ defmodule Sworm.MixProject do
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
       package: package(),
+      docs: docs(),
       deps: deps()
     ]
   end
@@ -33,10 +34,22 @@ defmodule Sworm.MixProject do
     ]
   end
 
+  defp docs do
+    [
+      main: "readme",
+      formatter_opts: [gfm: true],
+      extras: [
+        "README.md"
+      ]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:horde, "~> 0.6"},
+      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.20", only: :dev, runtime: false},
       {:ex_unit_clustered_case,
        github: "arjan/ex_unit_clustered_case", branch: "feature/manual-stop", only: :test}
     ]

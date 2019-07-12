@@ -16,6 +16,8 @@ defmodule Sworm.Delegate do
   ###
 
   defmodule State do
+    @moduledoc false
+
     defstruct [:pid, :sworm]
   end
 
