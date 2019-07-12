@@ -6,8 +6,12 @@ defmodule Sworm.MixProject do
       app: :sworm,
       version: File.read!("VERSION"),
       elixir: "~> 1.7",
+      description:
+        "A combination of a global, distributed process registry and supervisor, rolled into one, friendly API.",
+      build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       elixirc_paths: elixirc_paths(Mix.env()),
+      package: package(),
       deps: deps()
     ]
   end
@@ -20,11 +24,19 @@ defmodule Sworm.MixProject do
     ]
   end
 
+  defp package do
+    [
+      files: ["lib", "mix.exs", "README.md", "LICENSE.md"],
+      maintainers: ["Arjan Scherpenisse"],
+      licenses: ["MIT"],
+      links: %{Github: "https://github.com/arjan/sworm"}
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:horde, "~> 0.6"},
-      # {:horde, path: "../horde"},
       {:ex_unit_clustered_case,
        github: "arjan/ex_unit_clustered_case", branch: "feature/manual-stop", only: :test}
     ]
