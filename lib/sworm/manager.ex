@@ -26,33 +26,28 @@ defmodule Sworm.Manager do
   end
 
   def init({sworm, opts}) do
-    :net_kernel.monitor_nodes(true, [])
-    state = %State{sworm: sworm, opts: opts}
-    {:ok, update_nodes(state)}
+    :timer.send_interval(1000, :check)
+    {:ok, %State{sworm: sworm, opts: opts}}
   end
 
-  def handle_info({node_event, _node}, state)
-      when node_event == :nodeup or node_event == :nodedown do
+  def handle_info(:check, state) do
     {:noreply, update_nodes(state)}
   end
 
-  def handle_info(request, state) do
-    {:noreply, state}
-  end
-
-  def terminate(_reason, _state) do
-    :ok
-  end
-
   def update_nodes(state) do
-    nodes = Enum.sort([Node.self() | Node.list()])
+    match = [{{{state.sworm, :"$1"}, :"$2", :"$3"}, [], [:"$1"]}]
+
+    nodes =
+      Horde.Registry.select(Sworm.Directory, match)
+      |> Enum.filter(fn n -> :pong == Node.ping(n) end)
+      |> Enum.sort()
 
     case nodes == state.nodes do
       true ->
         state
 
       false ->
-        Logger.info("**** Node list updated to #{inspect(nodes)}")
+        Logger.debug("[#{state.sworm}] Node list updated to #{inspect(nodes)}")
 
         for mod <- [supervisor_name(state.sworm), registry_name(state.sworm)] do
           Horde.Cluster.set_members(mod, Enum.map(nodes, fn node -> {mod, node} end))

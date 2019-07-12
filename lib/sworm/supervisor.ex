@@ -17,6 +17,9 @@ defmodule Sworm.Supervisor do
       {Sworm.Manager, arg}
     ]
 
+    # register myself in the Sworm Directory
+    Horde.Registry.register(Sworm.Directory, {sworm, node()}, nil)
+
     Supervisor.init(children, strategy: :one_for_all)
   end
 end

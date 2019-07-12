@@ -20,9 +20,10 @@ defmodule Swarm do
 end
 ```
 
-You are not entirely done yet! Unlike the original Swarm, which has an
-in-lirbary, "singleton" process tree, you will need to add each
-`Sworm` to your own application's supervision tree:
+You are not entirely done yet! Unlike the original Swarm, which has a
+"singleton" process tree, you will need to add each `Sworm` to your
+own application's supervision tree:
+
 
 ```elixir
     children = [
@@ -52,6 +53,21 @@ does not need to be aware of it, because the delegate process handles
 name registration, process shutdown on name conflicts, and, in the
 near future, process handoff.
 
+
+## Node affinity / node black-/whitelisting
+
+Contrarily to Swarm, Sworm does not have a black- or whitelisting
+mechanism.  By design, each Sworm in the cluster only distributes
+processes among those nodes that explicitly have that particular sworm
+started in its supervision tree.
+
+Sworm maintains a cluster-global directory CRDT of registered Sworms,
+keeping track of on which node which type(s) of Sworm run.
+
+This ensures that processes are only started through Sworm on nodes
+that the sworm itself is also running on, instead of assuming that the
+cluster is homogenous and processes can run on each node, like Swarm
+does.
 
 
 ## Installation

@@ -28,7 +28,7 @@ defmodule SwormClusterTest do
     boot_timeout: 20_000,
     stdout: :standard_error do
     node_setup do
-      {:ok, _} = Application.ensure_all_started(:telemetry)
+      {:ok, _} = Application.ensure_all_started(:sworm)
       {:ok, pid} = Swurm.start_link()
       Process.unlink(pid)
 
@@ -74,7 +74,7 @@ defmodule SwormClusterTest do
     boot_timeout: 20_000,
     stdout: :standard_error do
     node_setup do
-      {:ok, _} = Application.ensure_all_started(:horde)
+      {:ok, _} = Application.ensure_all_started(:sworm)
       {:ok, pid} = Swurm.start_link()
       Process.unlink(pid)
 
@@ -102,6 +102,22 @@ defmodule SwormClusterTest do
 
         # process now runs on the other node
         node(pid) == other_node
+      end)
+    end
+
+    test "directory is updated when nodes join and leave", %{
+      cluster: c
+    } do
+      [a, b] = Cluster.members(c)
+
+      wait_until(fn ->
+        match?([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
+      end)
+
+      Cluster.stop_node(c, b)
+
+      wait_until(fn ->
+        match?([_], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
       end)
     end
   end
