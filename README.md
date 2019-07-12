@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/arjan/sworm.svg?branch=master)](https://travis-ci.org/arjan/sworm)
 [![Hex pm](http://img.shields.io/hexpm/v/sworm.svg?style=flat)](https://hex.pm/packages/sworm)
-[![Hex.pm](https://img.shields.io/hexpm/l/sworm.svg)(https://hex.pm/packages/sworm)
+[![Hex.pm](https://img.shields.io/hexpm/l/sworm.svg)](https://hex.pm/packages/sworm)
 
 A combination of a global, distributed process registry and
 supervisor, rolled into one, friendly API.
