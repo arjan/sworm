@@ -72,6 +72,69 @@ cluster is homogenous and processes can run on each node, like Swarm
 does.
 
 
+## Process state handoff
+
+Each individual Sworm can be configured to perform state a handoff to
+transition the state of the process.
+
+The case here is that when a node shuts down, Sworm will move the
+processes running on that node onto one of the other nodes of the
+cluster. By default, these processes are started with a clean sheet,
+e.g., the state of the process is lost. But when the Sworm is
+configured to perform process handoffs, the processes in the sworm are
+given some time to hand off their state into the cluster, so that the
+state can be restored right after the process is started again on
+another node.
+
+> Process handoff in Sworm works differently from the Swarm library.
+
+Process handoff must be explicitly enabled per sworm:
+
+```elixir
+defmodule MyProcesses do
+  use Sworm, handoff: true
+end
+```
+
+Or, in `config.exs`:
+
+```elixir
+config :sworm, MyProcesses, handoff: true
+```
+
+When a handoff occurs, the process that is about to exit, receives the
+following message:
+
+    {MyProcesses, :begin_handoff, delegate, ref}
+
+If it wants to pass on its internal state it needs to send the
+delegate a corresponding ack:
+
+    send(delegate, {ref, :handoff_state, some_state})
+
+Now, on the other node, the new process will be started in the normal
+way, however, right after it is started it will receive the
+`:end_handoff` signal:
+
+     {MyProcesses, :end_handoff, some_state}
+
+It can then restore its state to the state that was sent by its
+predecessor.
+
+The most basic implementation in a genserver process of this flow is this:
+
+```elixir
+def handle_info({MyProcesses, :begin_handoff, delegate, ref}, state) do
+  send(delegate, {ref, :handoff_state, state})
+  {:noreply, state}
+end
+
+def handle_info({MyProcesses, :end_handoff, state}, _state) do
+  {:noreply, state}
+end
+```
+
+
 ## Installation
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed

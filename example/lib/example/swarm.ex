@@ -1,3 +1,3 @@
 defmodule Example.Swarm do
-  use Sworm
+  use Sworm, handoff: true
 end

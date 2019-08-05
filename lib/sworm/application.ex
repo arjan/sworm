@@ -3,13 +3,21 @@ defmodule Sworm.Application do
 
   use Application
 
+  @env Mix.env()
+
   def start(_type, _args) do
-    children = [
+    opts = [strategy: :one_for_one, name: Sworm.Supervisor]
+    Supervisor.start_link(children(@env), opts)
+  end
+
+  defp children(:test) do
+    children(:prod) ++ [HandoffSworm]
+  end
+
+  defp children(_) do
+    [
       {Horde.Registry, name: Sworm.Directory, keys: :unique},
       Sworm.DirectoryManager
     ]
-
-    opts = [strategy: :one_for_one, name: Sworm.Supervisor]
-    Supervisor.start_link(children, opts)
   end
 end

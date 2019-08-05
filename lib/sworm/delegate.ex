@@ -18,10 +18,13 @@ defmodule Sworm.Delegate do
   defmodule State do
     @moduledoc false
 
-    defstruct [:pid, :sworm]
+    defstruct [:pid, :name, :sworm]
   end
 
+  @impl GenServer
   def init({sworm, name, mfa_or_pid}) do
+    Process.flag(:trap_exit, true)
+
     {:ok, pid} =
       case mfa_or_pid do
         {m, f, a} -> apply(m, f, a)
@@ -30,9 +33,11 @@ defmodule Sworm.Delegate do
 
     Process.monitor(pid)
 
+    check_end_handoff(pid, sworm, name)
+
     with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, pid) do
       Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
-      {:ok, %State{pid: pid, sworm: sworm}}
+      {:ok, %State{pid: pid, name: name, sworm: sworm}}
     else
       {:error, {:already_registered, pid}} ->
         Logger.warn("already registered :#{inspect(name)}, to #{inspect(pid)}, bail out")
@@ -40,6 +45,7 @@ defmodule Sworm.Delegate do
     end
   end
 
+  @impl true
   def handle_call(:get_worker_pid, _from, state) do
     {:reply, {:ok, state.pid}, state}
   end
@@ -59,6 +65,7 @@ defmodule Sworm.Delegate do
     {:reply, :ok, state}
   end
 
+  @impl true
   def handle_info({:DOWN, _ref, :process, pid, _reason}, %State{pid: pid} = state) do
     {:stop, :normal, state}
   end
@@ -67,12 +74,63 @@ defmodule Sworm.Delegate do
     {:stop, :shutdown, state}
   end
 
-  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner}}, state) do
-    {:stop, :normal, state}
+  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner} = r}, state) do
+    {:stop, r, state}
   end
 
   def handle_info(message, state) do
     Logger.info("Delegate #{inspect(self())} Got unexpected info message: #{inspect(message)}")
     {:noreply, state}
+  end
+
+  @impl true
+  def terminate(:shutdown, state) do
+    if get_sworm_config(state.sworm, :handoff, false) do
+      perform_begin_handoff(state)
+    end
+  end
+
+  def terminate(_reason, _state) do
+    :ok
+  end
+
+  ###
+
+  defp perform_begin_handoff(state) do
+    Logger.info("Delegate #{inspect(self())} state handoff")
+
+    ref = make_ref()
+    send(state.pid, {state.sworm, :begin_handoff, self(), ref})
+
+    receive do
+      {^ref, :ignore} ->
+        :ok
+
+      {^ref, :handoff_state, data} ->
+        Horde.Registry.register(registry_name(state.sworm), {:handoff_state, state.name}, data)
+        # give CRDT some time to propagate before we shut down
+        Process.sleep(2000)
+
+        :ok
+    after
+      1000 ->
+        :ok
+    end
+
+    :ok
+  end
+
+  defp check_end_handoff(pid, sworm, name) do
+    Horde.Registry.select(registry_name(sworm), [
+      {{{:handoff_state, name}, :"$1", :"$2"}, [], [{{:"$2"}}]}
+    ])
+    |> case do
+      [] ->
+        :ok
+
+      [{state}] ->
+        # notify the worker to restore itself
+        send(pid, {sworm, :end_handoff, state})
+    end
   end
 end

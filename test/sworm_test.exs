@@ -1,5 +1,5 @@
 defmodule SwormTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: false
   doctest Sworm
 
   setup do
