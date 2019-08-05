@@ -56,12 +56,14 @@ defmodule Sworm.Delegate do
   end
 
   def handle_call({:join, group}, _from, state) do
-    {:ok, _} = Horde.Registry.register(registry_name(state.sworm), {:group, group}, state.pid)
+    {:ok, _} =
+      Horde.Registry.register(registry_name(state.sworm), {:group, group, self()}, state.pid)
+
     {:reply, :ok, state}
   end
 
   def handle_call({:leave, group}, _from, state) do
-    :ok = Horde.Registry.unregister(registry_name(state.sworm), {:group, group})
+    :ok = Horde.Registry.unregister(registry_name(state.sworm), {:group, group, self()})
     {:reply, :ok, state}
   end
 

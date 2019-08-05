@@ -58,6 +58,14 @@ defmodule SwormTest do
 
     Sworm.join(TestSworm, "group1", worker)
     assert [^worker] = Sworm.members(TestSworm, "group1")
+
+    assert {:ok, worker} = Sworm.register_name(TestSworm, "b", TestServer, :start_link, [])
+
+    Sworm.join(TestSworm, "group1", worker)
+    assert [_, _] = Sworm.members(TestSworm, "group1")
+
+    Sworm.leave(TestSworm, "group1", worker)
+    assert [_] = Sworm.members(TestSworm, "group1")
   end
 
   defmodule NameTestServer do

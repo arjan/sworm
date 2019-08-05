@@ -79,7 +79,7 @@ defmodule Sworm.Main do
   end
 
   def members(sworm, group) do
-    match = [{{{:group, group}, :"$2", :"$3"}, [], [:"$3"]}]
+    match = [{{{:group, group, :_}, :"$2", :"$3"}, [], [:"$3"]}]
     Horde.Registry.select(registry_name(sworm), match)
   end
 
