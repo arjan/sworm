@@ -50,8 +50,7 @@ defmodule Sworm.MixProject do
       {:horde, "~> 0.6"},
       {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:ex_doc, "~> 0.20", only: :dev, runtime: false},
-      {:ex_unit_clustered_case,
-       github: "arjan/ex_unit_clustered_case", branch: "feature/manual-stop", only: :test}
+      {:ex_unit_clustered_case, github: "bitwalker/ex_unit_clustered_case", only: :test}
     ]
   end
 
