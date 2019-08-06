@@ -47,7 +47,7 @@ defmodule Sworm.MacroTest do
 
     assert :undefined = MySworm.whereis_name("test")
 
-    worker = MySworm.whereis_or_register_name("test", TestServer, :start_link, [])
+    assert {:ok, worker} = MySworm.whereis_or_register_name("test", TestServer, :start_link, [])
     assert is_pid(worker)
 
     assert ^worker = MySworm.whereis_name("test")

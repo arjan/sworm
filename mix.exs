@@ -48,8 +48,8 @@ defmodule Sworm.MixProject do
   defp deps do
     [
       {:horde, "~> 0.6"},
-      {:dialyxir, "~> 0.5", only: :dev, runtime: false},
       {:ex_doc, "~> 0.20", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0-rc.6", only: :dev, runtime: false},
       {:ex_unit_clustered_case, github: "bitwalker/ex_unit_clustered_case", only: :test}
     ]
   end

@@ -42,7 +42,7 @@ defmodule Sworm do
   > start a Sworm directly in a supervisor tree, using the provided
   > child_spec function.
   """
-  @spec child_spec(sworm :: atom(), opts :: [term()]) :: {:ok, pid()}
+  @spec start_link(sworm :: atom(), opts :: [term()]) :: {:ok, pid()}
   defdelegate start_link(sworm, opts \\ []), to: Main
 
   @doc """

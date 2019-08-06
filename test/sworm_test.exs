@@ -43,7 +43,7 @@ defmodule SwormTest do
   test "whereis_or_register_name" do
     assert :undefined = Sworm.whereis_name(TestSworm, "test")
 
-    worker = Sworm.whereis_or_register_name(TestSworm, "test", TestServer, :start_link, [])
+    {:ok, worker} = Sworm.whereis_or_register_name(TestSworm, "test", TestServer, :start_link, [])
     assert is_pid(worker)
 
     assert ^worker = Sworm.whereis_name(TestSworm, "test")

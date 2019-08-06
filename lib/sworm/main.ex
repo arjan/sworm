@@ -51,9 +51,12 @@ defmodule Sworm.Main do
   end
 
   def whereis_or_register_name(sworm, name, m, f, a) do
-    with :undefined <- whereis_name(sworm, name),
-         {:ok, pid} <- register_name(sworm, name, m, f, a) do
-      pid
+    case whereis_name(sworm, name) do
+      :undefined ->
+        register_name(sworm, name, m, f, a)
+
+      pid when is_pid(pid) ->
+        {:ok, pid}
     end
   end
 

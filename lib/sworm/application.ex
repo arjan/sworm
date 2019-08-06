@@ -10,8 +10,10 @@ defmodule Sworm.Application do
     Supervisor.start_link(children(@env), opts)
   end
 
-  defp children(:test) do
-    children(:prod) ++ [HandoffSworm]
+  if @env == :test do
+    defp children(:test) do
+      children(:prod) ++ [HandoffSworm]
+    end
   end
 
   defp children(_) do
