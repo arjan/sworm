@@ -55,6 +55,8 @@ defmodule Sworm do
   Horde supervisor, distributed over the members of the Horde
   according to its cluster strategy, and restarted when they crash.
 
+  When the node on which the process is spawned exits, the processes
+  are restarted on one of the other nodes in the cluster.
   """
   @spec register_name(
           sworm :: atom(),
@@ -111,7 +113,7 @@ defmodule Sworm do
 
   Returns an error when the given process is not part of the sworm.
   """
-  @spec join(sworm :: atom(), term(), pid()) :: :ok | {:error, :no_sworm}
+  @spec join(sworm :: atom(), term(), pid()) :: :ok | {:error, :not_found}
   defdelegate join(sworm, group, pid \\ self()), to: Main
 
   @doc """
@@ -119,7 +121,7 @@ defmodule Sworm do
 
   Returns an error when the given process is not part of the sworm.
   """
-  @spec leave(sworm :: atom(), term(), pid()) :: :ok
+  @spec leave(sworm :: atom(), term(), pid()) :: :ok | {:error, :not_found}
   defdelegate leave(sworm, group, pid \\ self()), to: Main
 
   @doc """
@@ -127,7 +129,7 @@ defmodule Sworm do
 
   Returns a list of pids.
   """
-  @spec members(sworm :: atom(), term()) :: [pid]
+  @spec members(sworm :: atom(), term()) :: [pid()]
   defdelegate members(sworm, group), to: Main
 
   defmacro __using__(opts), do: Sworm.Macro.using(opts)
