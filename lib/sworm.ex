@@ -107,19 +107,25 @@ defmodule Sworm do
   defdelegate registered(sworm), to: Main
 
   @doc """
-  Joins a process to a group
+  Joins a process to a group.
+
+  Returns an error when the given process is not part of the sworm.
   """
-  @spec join(sworm :: atom(), term(), pid()) :: :ok
+  @spec join(sworm :: atom(), term(), pid()) :: :ok | {:error, :no_sworm}
   defdelegate join(sworm, group, pid \\ self()), to: Main
 
   @doc """
   Removes a process from a group
+
+  Returns an error when the given process is not part of the sworm.
   """
   @spec leave(sworm :: atom(), term(), pid()) :: :ok
   defdelegate leave(sworm, group, pid \\ self()), to: Main
 
   @doc """
-  Gets all the members of a group. Returns a list of pids.
+  Gets all the members of a group within the sworm.
+
+  Returns a list of pids.
   """
   @spec members(sworm :: atom(), term()) :: [pid]
   defdelegate members(sworm, group), to: Main

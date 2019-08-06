@@ -71,8 +71,12 @@ defmodule Sworm.Main do
   end
 
   def whereis_name(sworm, name) do
-    with [{_delegate, worker_pid}] <- lookup(sworm, {:delegate, name}) do
-      worker_pid
+    case lookup(sworm, {:delegate, name}) do
+      [{_delegate, worker_pid}] ->
+        worker_pid
+
+      _ ->
+        :undefined
     end
   end
 
@@ -87,14 +91,22 @@ defmodule Sworm.Main do
   end
 
   def join(sworm, group, worker \\ self()) do
-    with [{delegate_pid, nil}] <- lookup(sworm, {:worker, worker}) do
-      GenServer.call(delegate_pid, {:join, group})
+    case lookup(sworm, {:worker, worker}) do
+      [{delegate_pid, nil}] ->
+        GenServer.call(delegate_pid, {:join, group})
+
+      _ ->
+        {:error, :no_sworm}
     end
   end
 
   def leave(sworm, group, worker \\ self()) do
-    with [{delegate_pid, nil}] <- lookup(sworm, {:worker, worker}) do
-      GenServer.call(delegate_pid, {:leave, group})
+    case lookup(sworm, {:worker, worker}) do
+      [{delegate_pid, nil}] ->
+        GenServer.call(delegate_pid, {:leave, group})
+
+      _ ->
+        {:error, :no_sworm}
     end
   end
 
