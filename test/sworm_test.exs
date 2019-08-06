@@ -53,8 +53,8 @@ defmodule SwormTest do
   end
 
   test "join / leave / members" do
-    assert {:error, :no_sworm} = Sworm.join(TestSworm, "group1", self())
-    assert {:error, :no_sworm} = Sworm.leave(TestSworm, "group1", self())
+    assert {:error, :not_found} = Sworm.join(TestSworm, "group1", self())
+    assert {:error, :not_found} = Sworm.leave(TestSworm, "group1", self())
 
     assert [] = Sworm.members(TestSworm, "group1")
     assert {:ok, worker} = Sworm.register_name(TestSworm, "a", TestServer, :start_link, [])
