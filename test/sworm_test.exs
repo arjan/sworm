@@ -150,6 +150,44 @@ defmodule SwormTest do
     |> Enum.uniq()
   end
 
+  test "register_name race" do
+    parent = self()
+
+    for n <- 1..10 do
+      spawn_link(fn ->
+        result = Sworm.register_name(TestSworm, "a", TestServer, :start_link, [])
+        send(parent, result)
+      end)
+    end
+
+    all = mailbox() |> Enum.reverse()
+
+    assert [
+             {:ok, p},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}},
+             {:error, {:already_started, p}}
+           ] = all
+  end
+
+  defp mailbox() do
+    mailbox([])
+  end
+
+  defp mailbox(rest) do
+    receive do
+      item -> mailbox([item | rest])
+    after
+      100 -> rest
+    end
+  end
+
   ###
 
   defp sworm(name) do

@@ -36,6 +36,10 @@ defmodule Sworm.Main do
 
       {:error, _} = e ->
         e
+
+      :ignore ->
+        # race lost
+        {:error, {:already_started, whereis_name(sworm, name)}}
     end
   end
 
