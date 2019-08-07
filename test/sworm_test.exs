@@ -69,6 +69,14 @@ defmodule SwormTest do
 
     assert :ok = Sworm.leave(TestSworm, "group1", worker)
     assert [_] = Sworm.members(TestSworm, "group1")
+
+    # leave/join multiple times is OK
+    assert :ok = Sworm.join(TestSworm, "group1", worker)
+    assert :ok = Sworm.join(TestSworm, "group1", worker)
+
+    assert :ok = Sworm.leave(TestSworm, "group1", worker)
+    assert :ok = Sworm.leave(TestSworm, "group1", worker)
+    assert :ok = Sworm.leave(TestSworm, "group1", worker)
   end
 
   defmodule NameTestServer do

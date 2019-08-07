@@ -56,8 +56,10 @@ defmodule Sworm.Delegate do
   end
 
   def handle_call({:join, group}, _from, state) do
-    {:ok, _} =
-      Horde.Registry.register(registry_name(state.sworm), {:group, group, self()}, state.pid)
+    case Horde.Registry.register(registry_name(state.sworm), {:group, group, self()}, state.pid) do
+      {:ok, _} -> :ok
+      {:error, {:already_registered, _}} -> :ok
+    end
 
     {:reply, :ok, state}
   end
