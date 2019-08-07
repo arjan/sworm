@@ -31,7 +31,7 @@ defmodule Sworm.Delegate do
         pid when is_pid(pid) -> {:ok, pid}
       end
 
-    Process.monitor(pid)
+    Process.link(pid)
 
     check_end_handoff(pid, sworm, name)
 
@@ -68,8 +68,8 @@ defmodule Sworm.Delegate do
   end
 
   @impl true
-  def handle_info({:DOWN, _ref, :process, pid, _reason}, %State{pid: pid} = state) do
-    {:stop, :normal, state}
+  def handle_info({:EXIT, pid, reason}, %State{pid: pid} = state) do
+    {:stop, reason, state}
   end
 
   def handle_info({:EXIT, _, :shutdown}, state) do
