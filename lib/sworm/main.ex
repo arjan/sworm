@@ -23,7 +23,7 @@ defmodule Sworm.Main do
       id: name,
       start: {Sworm.Delegate, :start_link, [sworm, name, {m, f, a}]},
       type: :worker,
-      restart: :transient,
+      restart: get_sworm_config(sworm, :restart, :transient),
       shutdown: 5000
     }
 

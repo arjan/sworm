@@ -71,6 +71,23 @@ cluster is homogenous and processes can run on each node, like Swarm
 does.
 
 
+## Child restart strategy
+
+By default, the restart strategy in the [child
+specification][childspec] of the supervision tree is set to
+`:transient`. To change this, declare the `restart:` option in your
+Sworm module like this:
+
+
+```elixir
+defmodule MyTemporaryProcesses do
+  use Sworm, restart: :temporary
+end
+```
+
+[childspec]: https://hexdocs.pm/elixir/Supervisor.html#module-child-specification
+
+
 ## Process state handoff
 
 Each individual Sworm can be configured to perform state a handoff to

@@ -86,4 +86,43 @@ defmodule Sworm.MacroTest do
     assert {:ok, _} = AnotherSworm.start_link()
     assert [] = AnotherSworm.registered()
   end
+
+  defmodule TempSworm do
+    use Sworm, restart: :temporary
+  end
+
+  test "Support child restart strategy - restart: transient (default)" do
+    assert {:ok, _} = AnotherSworm.start_link()
+    assert [] = AnotherSworm.registered()
+
+    assert {:ok, worker} =
+             AnotherSworm.whereis_or_register_name("test", TestServer, :start_link, [])
+
+    assert [{"test", ^worker}] = AnotherSworm.registered()
+
+    Process.exit(worker, :kill)
+    Process.sleep(200)
+
+    assert [{"test", worker2}] = AnotherSworm.registered()
+
+    assert worker != worker2
+  end
+
+  defmodule TempSworm do
+    use Sworm, restart: :temporary
+  end
+
+  test "Support child restart strategy - restart: temporary" do
+    assert {:ok, _} = TempSworm.start_link()
+    assert [] = TempSworm.registered()
+
+    assert {:ok, worker} = TempSworm.whereis_or_register_name("test", TestServer, :start_link, [])
+
+    assert [{"test", ^worker}] = TempSworm.registered()
+
+    Process.exit(worker, :kill)
+    Process.sleep(200)
+
+    assert [] = TempSworm.registered()
+  end
 end
