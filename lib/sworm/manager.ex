@@ -36,12 +36,7 @@ defmodule Sworm.Manager do
   end
 
   def update_nodes(state) do
-    match = [{{{state.sworm, :"$1"}, :"$2", :"$3"}, [], [:"$1"]}]
-
-    nodes =
-      Horde.Registry.select(Sworm.Directory, match)
-      |> Enum.filter(fn n -> :pong == Node.ping(n) end)
-      |> Enum.sort()
+    nodes = Sworm.DirectoryManager.nodes_for_sworm(state.sworm)
 
     case nodes == state.nodes do
       true ->
