@@ -139,8 +139,8 @@ defmodule SwormTest do
     assert([{"foo", ^pid_b}] = Sworm.registered(A))
     assert([{"foo", ^pid_b}] = Sworm.registered(B))
 
-    assert [{:undefined, _delegate, _, _}] = Horde.Supervisor.which_children(A.Supervisor)
-    assert [{:undefined, _delegate, _, _}] = Horde.Supervisor.which_children(B.Supervisor)
+    assert [{:undefined, _delegate, _, _}] = Horde.DynamicSupervisor.which_children(A.Supervisor)
+    assert [{:undefined, _delegate, _, _}] = Horde.DynamicSupervisor.which_children(B.Supervisor)
   end
 
   def delegates() do

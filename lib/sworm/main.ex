@@ -28,7 +28,7 @@ defmodule Sworm.Main do
     }
 
     with :undefined <- whereis_name(sworm, name),
-         {:ok, delegate_pid} <- Horde.Supervisor.start_child(supervisor_name(sworm), spec) do
+         {:ok, delegate_pid} <- Horde.DynamicSupervisor.start_child(supervisor_name(sworm), spec) do
       GenServer.call(delegate_pid, :get_worker_pid)
     else
       pid when is_pid(pid) ->
@@ -69,7 +69,7 @@ defmodule Sworm.Main do
   def unregister_name(sworm, name) do
     case lookup(sworm, {:delegate, name}) do
       [{delegate, _worker}] ->
-        Horde.Supervisor.terminate_child(supervisor_name(sworm), delegate)
+        Horde.DynamicSupervisor.terminate_child(supervisor_name(sworm), delegate)
 
       _ ->
         {:error, :not_found}

@@ -13,7 +13,7 @@ defmodule Sworm.Supervisor do
   def init({sworm, _opts} = arg) do
     children = [
       {Horde.Registry, name: registry_name(sworm), keys: :unique},
-      {Horde.Supervisor, name: supervisor_name(sworm), strategy: :one_for_one, children: []},
+      {Horde.DynamicSupervisor, name: supervisor_name(sworm), strategy: :one_for_one, children: []},
       {Sworm.Manager, arg}
     ]
 
