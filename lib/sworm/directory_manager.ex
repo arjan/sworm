@@ -33,7 +33,7 @@ defmodule Sworm.DirectoryManager do
   end
 
   def update_nodes(state) do
-    nodes = Enum.sort([Node.self() | Node.list()])
+    nodes = Node.list([:this, :visible]) |> Enum.sort()
 
     case nodes == state do
       true ->
@@ -43,13 +43,13 @@ defmodule Sworm.DirectoryManager do
         Logger.info("Node directory list updated to #{inspect(nodes)}")
         Horde.Cluster.set_members(Sworm.Directory, Enum.map(nodes, &{Sworm.Directory, &1}))
 
-        # remove all entries from directory which are not part of the current nodes
-        match = [{{:"$1", :"$2", :"$3"}, [], [:"$1"]}]
+        # # remove all entries from directory which are not part of the current nodes
+        # match = [{{:"$1", :"$2", :"$3"}, [], [:"$1"]}]
 
-        for {_sworm, node} = key <- Horde.Registry.select(Sworm.Directory, match),
-            not Enum.member?(nodes, node) do
-          Horde.Registry.unregister(Sworm.Directory, key)
-        end
+        # for {_sworm, node} = key <- Horde.Registry.select(Sworm.Directory, match),
+        #     not Enum.member?(nodes, node) do
+        #   Horde.Registry.unregister(Sworm.Directory, key)
+        # end
 
         nodes
     end
