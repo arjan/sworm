@@ -1,6 +1,8 @@
 defmodule Sworm.DirectoryManager do
   @moduledoc false
 
+  @selector [{{:"$1", :"$2", :"$3"}, [], [{{:"$1", :"$3"}}]}]
+
   use GenServer
 
   def start_link(_) do
@@ -8,9 +10,12 @@ defmodule Sworm.DirectoryManager do
   end
 
   def nodes_for_sworm(sworm) do
-    match = [{{{sworm, :"$1"}, :"$2", :"$3"}, [], [:"$1"]}]
-
-    Horde.Registry.select(Sworm.Directory, match)
+    Horde.Registry.select(Sworm.Directory, @selector)
+    |> Enum.map(fn
+      {{^sworm, node}, :alive} -> node
+      _ -> nil
+    end)
+    |> Enum.reject(&is_nil/1)
     |> Enum.sort()
   end
 
@@ -43,15 +48,42 @@ defmodule Sworm.DirectoryManager do
         Logger.info("Node directory list updated to #{inspect(nodes)}")
         Horde.Cluster.set_members(Sworm.Directory, Enum.map(nodes, &{Sworm.Directory, &1}))
 
-        # # remove all entries from directory which are not part of the current nodes
-        # match = [{{:"$1", :"$2", :"$3"}, [], [:"$1"]}]
+        # remove all entries from directory which are not part of the current nodes
+        for {{_sworm, node} = key, status} <- Horde.Registry.select(Sworm.Directory, @selector) do
+          node_ok = Enum.member?(nodes, node)
 
-        # for {_sworm, node} = key <- Horde.Registry.select(Sworm.Directory, match),
-        #     not Enum.member?(nodes, node) do
-        #   Horde.Registry.unregister(Sworm.Directory, key)
-        # end
+          case status do
+            :alive when node_ok ->
+              :ok
+
+            :alive ->
+              # need to filter it, temporarily; node might reappear
+              register_or_update(key, {:dead, now()})
+
+            {:dead, _ts} when node_ok ->
+              # it reappeared; set it to alive again
+              register_or_update(key, :alive)
+
+            {:dead, ts} ->
+              if now() - ts > 3600_000 do
+                # too long; unregister the service for good.
+                Horde.Registry.unregister(Sworm.Directory, key)
+              end
+
+              :ok
+          end
+        end
 
         nodes
     end
   end
+
+  defp register_or_update(key, value) do
+    with {:error, {:already_registered, _}} <-
+           Horde.Registry.register(Sworm.Directory, key, value) do
+      Horde.Registry.update_value(Sworm.Directory, key, fn _ -> value end)
+    end
+  end
+
+  defp now(), do: :erlang.system_time(:millisecond)
 end

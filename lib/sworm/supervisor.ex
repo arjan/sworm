@@ -13,12 +13,13 @@ defmodule Sworm.Supervisor do
   def init({sworm, _opts} = arg) do
     children = [
       {Horde.Registry, name: registry_name(sworm), keys: :unique},
-      {Horde.DynamicSupervisor, name: supervisor_name(sworm), strategy: :one_for_one, children: []},
+      {Horde.DynamicSupervisor,
+       name: supervisor_name(sworm), strategy: :one_for_one, children: []},
       {Sworm.Manager, arg}
     ]
 
     # register myself in the Sworm Directory
-    Horde.Registry.register(Sworm.Directory, {sworm, node()}, nil)
+    Horde.Registry.register(Sworm.Directory, {sworm, node()}, :alive)
 
     Supervisor.init(children, strategy: :one_for_all)
   end
