@@ -25,24 +25,54 @@ defmodule Sworm.Delegate do
   def init({sworm, name, mfa_or_pid}) do
     Process.flag(:trap_exit, true)
 
-    {:ok, pid} =
-      case mfa_or_pid do
-        {m, f, a} -> apply(m, f, a)
-        pid when is_pid(pid) -> {:ok, pid}
+    with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, nil) do
+      {:ok, pid, self_started} =
+        case mfa_or_pid do
+          {m, f, a} ->
+            {:ok, pid} = apply(m, f, a)
+            {:ok, pid, true}
+
+          pid when is_pid(pid) ->
+            {:ok, pid, false}
+        end
+
+      Process.link(pid)
+
+      with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil),
+           {_, _} <-
+             Horde.Registry.update_value(registry_name(sworm), {:delegate, name}, fn _ -> pid end) do
+        check_end_handoff(pid, sworm, name)
+
+        {:ok, %State{pid: pid, name: name, sworm: sworm}}
+      else
+        {:error, {:already_registered, d}} ->
+          Logger.warn(
+            "already registered worker for #{inspect(name)}, to #{inspect(d)}, bail out"
+          )
+
+          init_bail(pid, self_started)
+
+        :error ->
+          Logger.warn("Pid update failed")
+          init_bail(pid, self_started)
       end
 
-    Process.link(pid)
-
-    check_end_handoff(pid, sworm, name)
-
-    with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, pid) do
-      Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil)
       {:ok, %State{pid: pid, name: name, sworm: sworm}}
     else
-      {:error, {:already_registered, pid}} ->
-        Logger.warn("already registered :#{inspect(name)}, to #{inspect(pid)}, bail out")
+      {:error, {:already_registered, delegate}} ->
+        Logger.warn(
+          "already registered delegate for #{inspect(name)}, to #{inspect(delegate)}, bail out"
+        )
+
         :ignore
     end
+  end
+
+  defp init_bail(false, _pid), do: :ignore
+
+  defp init_bail(true, pid) do
+    Process.exit(pid, :normal)
+    :ignore
   end
 
   @impl true
@@ -80,6 +110,10 @@ defmodule Sworm.Delegate do
 
   def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner} = r}, state) do
     {:stop, r, state}
+  end
+
+  def handle_info({:EXIT, _, reason}, state) do
+    {:stop, reason, state}
   end
 
   def handle_info(message, state) do
