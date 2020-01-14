@@ -10,13 +10,9 @@ defmodule Sworm.Supervisor do
   end
 
   @impl true
-  def init({sworm, opts} = arg) do
+  def init({sworm, _opts} = arg) do
     distribution_strategy =
-      Keyword.get(
-        opts,
-        :distribution_strategy,
-        Horde.UniformDistribution
-      )
+      get_sworm_config(sworm, :distribution_strategy, Horde.UniformDistribution)
 
     children = [
       {Horde.Registry, name: registry_name(sworm), keys: :unique},

@@ -87,10 +87,6 @@ defmodule Sworm.MacroTest do
     assert [] = AnotherSworm.registered()
   end
 
-  defmodule TempSworm do
-    use Sworm, restart: :temporary
-  end
-
   test "Support child restart strategy - restart: transient (default)" do
     assert {:ok, _} = AnotherSworm.start_link()
     assert [] = AnotherSworm.registered()
@@ -108,21 +104,35 @@ defmodule Sworm.MacroTest do
     assert worker != worker2
   end
 
-  defmodule TempSworm do
+  defmodule RestartTemporarySworm do
     use Sworm, restart: :temporary
   end
 
   test "Support child restart strategy - restart: temporary" do
-    assert {:ok, _} = TempSworm.start_link()
-    assert [] = TempSworm.registered()
+    assert {:ok, _} = RestartTemporarySworm.start_link()
+    assert [] = RestartTemporarySworm.registered()
 
-    assert {:ok, worker} = TempSworm.whereis_or_register_name("test", TestServer, :start_link, [])
+    assert {:ok, worker} =
+             RestartTemporarySworm.whereis_or_register_name("test", TestServer, :start_link, [])
 
-    assert [{"test", ^worker}] = TempSworm.registered()
+    assert [{"test", ^worker}] = RestartTemporarySworm.registered()
 
     Process.exit(worker, :kill)
     Process.sleep(200)
 
-    assert [] = TempSworm.registered()
+    assert [] = RestartTemporarySworm.registered()
+  end
+
+  defmodule DistributionStrategySworm do
+    use Sworm, distribution_strategy: Horde.UniformQuorumDistribution
+  end
+
+  test "Support distribution strategy" do
+    assert {:ok, _} = DistributionStrategySworm.start_link(name: A)
+    assert [] = DistributionStrategySworm.registered()
+
+    sup = Process.whereis(DistributionStrategySworm.Supervisor)
+
+    assert Horde.UniformQuorumDistribution == :sys.get_state(sup).distribution_strategy
   end
 end

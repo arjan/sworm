@@ -16,6 +16,7 @@ defmodule Sworm.Macro do
         quote do
           def configure do
             Application.put_env(:sworm, __MODULE__, unquote(opts))
+
             :ok
           end
 
