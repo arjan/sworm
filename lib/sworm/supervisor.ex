@@ -10,11 +10,21 @@ defmodule Sworm.Supervisor do
   end
 
   @impl true
-  def init({sworm, _opts} = arg) do
+  def init({sworm, opts} = arg) do
+    distribution_strategy =
+      Keyword.get(
+        opts,
+        :distribution_strategy,
+        Horde.UniformDistribution
+      )
+
     children = [
       {Horde.Registry, name: registry_name(sworm), keys: :unique},
       {Horde.DynamicSupervisor,
-       name: supervisor_name(sworm), strategy: :one_for_one, children: []},
+       name: supervisor_name(sworm),
+       strategy: :one_for_one,
+       children: [],
+       distribution_strategy: distribution_strategy},
       {Sworm.Manager, arg}
     ]
 
