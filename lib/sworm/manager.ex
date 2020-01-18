@@ -32,6 +32,7 @@ defmodule Sworm.Manager do
   end
 
   def handle_info(:check, state) do
+    Sworm.DirectoryManager.register(state.sworm)
     {:noreply, update_nodes(state)}
   end
 

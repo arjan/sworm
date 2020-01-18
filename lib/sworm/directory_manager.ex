@@ -9,6 +9,10 @@ defmodule Sworm.DirectoryManager do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
   end
 
+  def register(sworm) do
+    GenServer.call(__MODULE__, {:register, sworm})
+  end
+
   def nodes_for_sworm(sworm) do
     Horde.Registry.select(Sworm.Directory, @selector)
     |> Enum.map(fn
@@ -26,6 +30,13 @@ defmodule Sworm.DirectoryManager do
   def init([]) do
     :net_kernel.monitor_nodes(true, [])
     {:ok, update_nodes([])}
+  end
+
+  def handle_call({:register, sworm}, _from, state) do
+    # register this sworm in the Sworm Directory
+    reply = Horde.Registry.register(Sworm.Directory, {sworm, node()}, :alive)
+
+    {:reply, reply, state}
   end
 
   def handle_info({node_event, _node}, state)
