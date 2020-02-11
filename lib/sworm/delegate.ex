@@ -50,11 +50,11 @@ defmodule Sworm.Delegate do
             "already registered worker for #{inspect(name)}, to #{inspect(d)}, bail out"
           )
 
-          init_bail(pid, self_started)
+          init_bail(self_started, pid)
 
         :error ->
           Logger.warn("Pid update failed")
-          init_bail(pid, self_started)
+          init_bail(self_started, pid)
       end
 
       {:ok, %State{pid: pid, name: name, sworm: sworm}}
@@ -71,6 +71,7 @@ defmodule Sworm.Delegate do
   defp init_bail(false, _pid), do: :ignore
 
   defp init_bail(true, pid) do
+    Process.unlink(pid)
     Process.exit(pid, :normal)
     :ignore
   end
