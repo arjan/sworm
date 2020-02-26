@@ -46,21 +46,21 @@ defmodule Sworm.Delegate do
         {:ok, %State{pid: pid, name: name, sworm: sworm}}
       else
         {:error, {:already_registered, d}} ->
-          Logger.warn(
+          Logger.debug(
             "already registered worker for #{inspect(name)}, to #{inspect(d)}, bail out"
           )
 
           init_bail(self_started, pid)
 
         :error ->
-          Logger.warn("Pid update failed")
+          Logger.debug("pid update failed for #{inspect(name)}")
           init_bail(self_started, pid)
       end
 
       {:ok, %State{pid: pid, name: name, sworm: sworm}}
     else
       {:error, {:already_registered, delegate}} ->
-        Logger.warn(
+        Logger.debug(
           "already registered delegate for #{inspect(name)}, to #{inspect(delegate)}, bail out"
         )
 
@@ -136,7 +136,7 @@ defmodule Sworm.Delegate do
   ###
 
   defp perform_begin_handoff(state) do
-    Logger.info("Delegate #{inspect(self())} state handoff")
+    Logger.debug("Delegate #{inspect(self())} state handoff")
 
     ref = make_ref()
     send(state.pid, {state.sworm, :begin_handoff, self(), ref})
