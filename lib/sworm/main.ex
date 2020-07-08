@@ -78,7 +78,7 @@ defmodule Sworm.Main do
 
   def whereis_name(sworm, name) do
     case lookup(sworm, {:delegate, name}) do
-      [{_delegate, worker_pid}] ->
+      [{_delegate, worker_pid}] when is_pid(worker_pid) ->
         worker_pid
 
       _ ->
