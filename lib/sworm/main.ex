@@ -88,7 +88,9 @@ defmodule Sworm.Main do
 
   def registered(sworm) do
     match = [{{{:delegate, :"$1"}, :"$2", :"$3"}, [], [{{:"$1", :"$3"}}]}]
+
     Horde.Registry.select(registry_name(sworm), match)
+    |> Enum.filter(&is_pid(elem(&1, 1)))
   end
 
   def members(sworm, group) do
