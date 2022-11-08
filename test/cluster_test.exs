@@ -109,6 +109,19 @@ defmodule SwormClusterTest do
         node(pid) == other_node
       end)
     end
+  end
+
+  scenario "isolated test",
+    cluster_size: 2,
+    boot_timeout: 20_000,
+    stdout: :standard_error do
+    node_setup do
+      {:ok, _} = Application.ensure_all_started(:sworm)
+      {:ok, pid} = Swurm.start_link()
+      Process.unlink(pid)
+
+      :ok
+    end
 
     test "directory is updated when nodes join and leave", %{
       cluster: c
