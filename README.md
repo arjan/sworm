@@ -1,6 +1,6 @@
 # Sworm
 
-[![Build Status](https://travis-ci.org/arjan/sworm.svg?branch=master)](https://travis-ci.org/arjan/sworm)
+[![Build status](https://github.com/arjan/sworm/actions/workflows/test.yml/badge.svg)](https://github.com/arjan/sworm/actions/workflows/test.yml)
 [![Hex pm](https://img.shields.io/hexpm/v/sworm.svg?style=flat)](https://hex.pm/packages/sworm)
 
 A combination of a global, distributed process registry and
