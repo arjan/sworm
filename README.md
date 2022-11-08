@@ -25,7 +25,6 @@ You are not entirely done yet! Unlike the original Swarm, which has a
 "singleton" process tree, you will need to add each `Sworm` to your
 own application's supervision tree:
 
-
 ```elixir
     children = [
       Swarm,
@@ -35,14 +34,13 @@ own application's supervision tree:
 
 Now you can call `Swarm.registered()`, `Swarm.register_name` etc like you're used to.
 
-
 ## Architecture
 
 Sworm combines Horde's DynamicSupervisor and Registry modules to
 reproduce the Swarm library.
 
 To be able to register an aribtrary `{m, f, a}` specification with
-Sworm, it spawns a *delegate process* and uses this process as the
+Sworm, it spawns a _delegate process_ and uses this process as the
 primary process for name registration and supervision. This delegate
 process then spawns and links the actual process as specified in the
 MFA.
@@ -52,11 +50,10 @@ does not need to be aware of it, because the delegate process handles
 name registration, process shutdown on name conflicts, and, in the
 near future, process handoff.
 
-
 ## Node affinity / node black-/whitelisting
 
 Contrarily to Swarm, Sworm does not have a black- or whitelisting
-mechanism.  By design, each Sworm in the cluster only distributes
+mechanism. By design, each Sworm in the cluster only distributes
 processes among those nodes that explicitly have that particular sworm
 started in its supervision tree.
 
@@ -68,6 +65,18 @@ that the sworm itself is also running on, instead of assuming that the
 cluster is homogenous and processes can run on each node, like Swarm
 does.
 
+To use it, pass in a custom [`:distribution_strategy`][dist] option like this:
+
+```elixir
+defmodule MyTemporaryProcesses do
+  use Sworm, distribution_strategy: Horde.UniformQuorumDistribution
+end
+```
+
+The default distribution strategy is [Horde.UniformDistribution][dist_horde].
+
+[dist]: https://hexdocs.pm/horde/Horde.DistributionStrategy.html#t:t/0
+[dist_horde]: https://hexdocs.pm/horde/Horde.UniformDistribution.html
 
 ## Child restart strategy
 
@@ -75,7 +84,6 @@ By default, the restart strategy in the [child
 specification][childspec] of the supervision tree is set to
 `:transient`. To change this, declare the `restart:` option in your
 Sworm module like this:
-
 
 ```elixir
 defmodule MyTemporaryProcesses do
@@ -85,6 +93,19 @@ end
 
 [childspec]: https://hexdocs.pm/elixir/Supervisor.html#module-child-specification
 
+## CRDT options
+
+To override Horde's [`:delta_crdt_options`][crdt], pass them in the `use` statement:
+
+```elixir
+defmodule MyTemporaryProcesses do
+  use Sworm, delta_crdt_options: [sync_interval: 100]
+end
+```
+
+These CRDT options are used for both the internal Registry and the DynamicSupervisor CRDTs.
+
+[crdt]: https://hexdocs.pm/delta_crdt/0.6.4/DeltaCrdt.html#t:crdt_option/0
 
 ## Process state handoff
 
@@ -147,7 +168,6 @@ def handle_info({MyProcesses, :end_handoff, state}, _state) do
   {:noreply, state}
 end
 ```
-
 
 ## Installation
 

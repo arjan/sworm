@@ -14,12 +14,16 @@ defmodule Sworm.Supervisor do
     distribution_strategy =
       get_sworm_config(sworm, :distribution_strategy, Horde.UniformDistribution)
 
+    delta_crdt_options = get_sworm_config(sworm, :delta_crdt_options, [])
+
     children = [
-      {Horde.Registry, name: registry_name(sworm), keys: :unique},
+      {Horde.Registry,
+       name: registry_name(sworm), keys: :unique, delta_crdt_options: delta_crdt_options},
       {Horde.DynamicSupervisor,
        name: supervisor_name(sworm),
        strategy: :one_for_one,
        children: [],
+       delta_crdt_options: delta_crdt_options,
        distribution_strategy: distribution_strategy},
       {Sworm.Manager, arg}
     ]
