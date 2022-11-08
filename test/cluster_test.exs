@@ -23,18 +23,7 @@ defmodule SwormClusterTest do
 
   import Sworm.Support.Helpers
 
-  scenario "given a healthy cluster",
-    cluster_size: 2,
-    boot_timeout: 20_000,
-    stdout: :standard_error do
-    node_setup do
-      {:ok, _} = Application.ensure_all_started(:sworm)
-      {:ok, pid} = Swurm.start_link()
-      Process.unlink(pid)
-
-      :ok
-    end
-
+  sworm_scenario Swurm, "given a healthy cluster" do
     test "can call on all nodes", %{cluster: c} do
       assert [[], []] =
                Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
@@ -69,18 +58,7 @@ defmodule SwormClusterTest do
     end
   end
 
-  scenario "given a cluster that is shutting down",
-    cluster_size: 2,
-    boot_timeout: 20_000,
-    stdout: :standard_error do
-    node_setup do
-      {:ok, _} = Application.ensure_all_started(:sworm)
-      {:ok, pid} = Swurm.start_link()
-      Process.unlink(pid)
-
-      :ok
-    end
-
+  sworm_scenario Swurm, "given a cluster that is shutting down" do
     test "register process on one server; process moves to other node when it goes down", %{
       cluster: c
     } do
@@ -111,18 +89,7 @@ defmodule SwormClusterTest do
     end
   end
 
-  scenario "isolated test",
-    cluster_size: 2,
-    boot_timeout: 20_000,
-    stdout: :standard_error do
-    node_setup do
-      {:ok, _} = Application.ensure_all_started(:sworm)
-      {:ok, pid} = Swurm.start_link()
-      Process.unlink(pid)
-
-      :ok
-    end
-
+  sworm_scenario Swurm, "directory" do
     test "directory is updated when nodes join and leave", %{
       cluster: c
     } do

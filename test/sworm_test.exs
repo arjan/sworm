@@ -153,7 +153,7 @@ defmodule SwormTest do
   test "register_name race" do
     parent = self()
 
-    for n <- 1..10 do
+    for _n <- 1..10 do
       spawn_link(fn ->
         result = Sworm.register_name(TestSworm, "a", TestServer, :start_link, [])
         send(parent, result)

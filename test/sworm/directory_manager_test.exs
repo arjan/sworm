@@ -38,13 +38,11 @@ defmodule Sworm.DirectoryManagerTest do
     test "directory is updated when nodes join and leave", %{
       cluster: c
     } do
-      [a, b] = Cluster.members(c)
+      [a, _b] = Cluster.members(c)
 
       wait_until(fn ->
         match?([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [MySwarm]))
       end)
-
-      IO.puts("--------------------------------------------------------")
 
       # stop_node(c, b)
       Cluster.partition(c, 2)
@@ -52,8 +50,6 @@ defmodule Sworm.DirectoryManagerTest do
       wait_until(fn ->
         match?([_], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [MySwarm]))
       end)
-
-      IO.puts("--------------------------------------------------------")
 
       # stop_node(c, b)
       Cluster.heal(c)

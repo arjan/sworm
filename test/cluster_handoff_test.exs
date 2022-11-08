@@ -3,16 +3,7 @@ defmodule SwormClusterHandoffTest do
 
   import Sworm.Support.Helpers
 
-  scenario "given a healthy cluster",
-    cluster_size: 2,
-    boot_timeout: 20_000,
-    stdout: :standard_error do
-    node_setup do
-      {:ok, _} = Application.ensure_all_started(:sworm)
-
-      :ok
-    end
-
+  sworm_scenario nil, "given a healthy cluster" do
     test "state is propagated when process moves to another server on node shutdown", %{
       cluster: c
     } do
