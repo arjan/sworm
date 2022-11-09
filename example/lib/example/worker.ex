@@ -1,6 +1,12 @@
 defmodule Example.Worker do
   use GenServer
 
+  def mass_start(name, n \\ 10) do
+    for _ <- 1..n do
+      Example.Swarm.register_name(name, __MODULE__, :start_link, [])
+    end
+  end
+
   def start_link() do
     GenServer.start_link(__MODULE__, [])
   end
