@@ -64,7 +64,12 @@ defmodule Sworm.Delegate do
           "already registered delegate for #{inspect(name)}, to #{inspect(delegate)}, bail out"
         )
 
-        :ignore
+        with true <- node(delegate) == node(),
+             {:ok, pid} <- GenServer.call(delegate, :get_worker_pid) do
+          {:stop, {:already_started, pid}}
+        else
+          _ -> :ignore
+        end
     end
   end
 

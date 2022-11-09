@@ -3,18 +3,33 @@ defmodule Swurm do
 
   defmodule TestServer do
     use GenServer
+    require Logger
 
     def start_link() do
       GenServer.start_link(__MODULE__, [])
     end
 
     def init(a) do
+      Process.flag(:trap_exit, true)
       {:ok, a}
+    end
+
+    def handle_info(message, state) do
+      Logger.warn("*** #{inspect(message)}")
+
+      {:noreply, state}
     end
   end
 
   def start_one(name) do
     Swurm.register_name(name, TestServer, :start_link, [])
+  end
+
+  def start_many(name, n \\ 10) do
+    for _ <- 1..n do
+      Task.async(fn -> start_one(name) end)
+    end
+    |> Task.await_many()
   end
 end
 
@@ -55,6 +70,33 @@ defmodule SwormClusterTest do
         [[], []] ==
           Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
       end)
+    end
+  end
+
+  sworm_scenario Swurm, "given a clean cluster for simultaneous registers" do
+    test "many simultaneous registers for the same name always result in a valid pid", %{
+      cluster: c
+    } do
+      [_, _] = Cluster.members(c)
+
+      results =
+        for n <- 1..20 do
+          node = Cluster.random_member(c)
+
+          Task.async(fn ->
+            Cluster.call(node, Swurm, :start_many, ["hi_#{n}"])
+            |> Enum.sort()
+          end)
+        end
+        |> Task.await_many()
+
+      for start_results <- results do
+        assert {:ok, pid} = List.last(start_results)
+        assert is_pid(pid)
+        assert {:error, {:already_started, ^pid}} = List.first(start_results)
+      end
+
+      Process.sleep(2000)
     end
   end
 
