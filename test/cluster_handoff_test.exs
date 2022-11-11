@@ -1,5 +1,5 @@
 defmodule SwormClusterHandoffTest do
-  use ExUnit.ClusteredCase
+  use SwormCase
 
   import Sworm.Support.Helpers
 
@@ -12,13 +12,11 @@ defmodule SwormClusterHandoffTest do
       Cluster.call(n, HandoffSworm, :start_one, ["hi"])
 
       # settle
-      wait_until(fn ->
-        match?(
-          [[{"hi", _}], [{"hi", _}]],
-          Cluster.members(c)
-          |> Enum.map(fn n -> Cluster.call(n, HandoffSworm, :registered, []) end)
-        )
-      end)
+      until_match(
+        [[{"hi", _}], [{"hi", _}]],
+        Cluster.members(c)
+        |> Enum.map(fn n -> Cluster.call(n, HandoffSworm, :registered, []) end)
+      )
 
       [[{_, pid}] | _] =
         Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, HandoffSworm, :registered, []) end)
@@ -38,16 +36,14 @@ defmodule SwormClusterHandoffTest do
         [{"hi", pid}] = Cluster.call(other, HandoffSworm, :registered, [])
 
         # process now runs on the other node
-        node(pid) == other
+        assert node(pid) == other
       end)
 
       # get the new pid
       [{"hi", pid}] = Cluster.call(other, HandoffSworm, :registered, [])
 
       # ensure that the state has been moved through the handoff process
-      wait_until(fn ->
-        4 == GenServer.call(pid, :get)
-      end)
+      until_match(4, GenServer.call(pid, :get))
     end
   end
 end

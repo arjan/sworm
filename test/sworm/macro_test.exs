@@ -1,5 +1,5 @@
 defmodule Sworm.MacroTest do
-  use ExUnit.Case
+  use SwormCase
 
   defmodule MySworm do
     use Sworm
@@ -97,11 +97,16 @@ defmodule Sworm.MacroTest do
     assert [{"test", ^worker}] = AnotherSworm.registered()
 
     Process.exit(worker, :kill)
-    Process.sleep(200)
 
-    assert [{"test", worker2}] = AnotherSworm.registered()
+    wait_until(fn ->
+      case AnotherSworm.registered() do
+        [{"test", worker2}] when worker2 != worker ->
+          true
 
-    assert worker != worker2
+        _ ->
+          false
+      end
+    end)
   end
 
   defmodule RestartTemporarySworm do
@@ -118,9 +123,8 @@ defmodule Sworm.MacroTest do
     assert [{"test", ^worker}] = RestartTemporarySworm.registered()
 
     Process.exit(worker, :kill)
-    Process.sleep(200)
 
-    assert [] = RestartTemporarySworm.registered()
+    until_match([], RestartTemporarySworm.registered())
   end
 
   defmodule DistributionStrategySworm do

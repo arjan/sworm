@@ -34,9 +34,7 @@ defmodule Swurm do
 end
 
 defmodule SwormClusterTest do
-  use ExUnit.ClusteredCase
-
-  import Sworm.Support.Helpers
+  use SwormCase
 
   sworm_scenario Swurm, "given a healthy cluster" do
     test "can call on all nodes", %{cluster: c} do
@@ -95,8 +93,34 @@ defmodule SwormClusterTest do
         assert is_pid(pid)
         assert {:error, {:already_started, ^pid}} = List.first(start_results)
       end
+    end
 
-      Process.sleep(2000)
+    test "whereis_name always returns either a pid or undefined", %{
+      cluster: c
+    } do
+      [a, b] = Cluster.members(c)
+
+      ta =
+        Task.async(fn ->
+          Cluster.call(a, fn ->
+            for _ <- 1..1000 do
+              Process.sleep(3)
+              Swurm.whereis_name("test1")
+            end
+          end)
+        end)
+
+      tb =
+        Task.async(fn ->
+          Cluster.call(b, fn ->
+            Swurm.start_one("test1")
+          end)
+        end)
+
+      [r, {:ok, pid}] = Task.await_many([ta, tb])
+
+      r = r |> Enum.reject(&(&1 == :undefined)) |> Enum.uniq()
+      assert r == [pid]
     end
   end
 
@@ -107,18 +131,17 @@ defmodule SwormClusterTest do
       n = Cluster.random_member(c)
       Cluster.call(n, Swurm, :start_one, ["hi"])
 
-      wait_until(fn ->
-        match?([_], Cluster.call(n, Swurm, :registered, []))
-      end)
+      until_match([_], Cluster.call(n, Swurm, :registered, []))
 
       [{"hi", pid}] = Cluster.call(n, Swurm, :registered, [])
 
       target_node = node(pid)
       [other_node] = Cluster.members(c) -- [target_node]
 
-      wait_until(fn ->
-        [{"hi", pid}] == Cluster.call(other_node, Swurm, :registered, [])
-      end)
+      until_match(
+        [{"hi", ^pid}],
+        Cluster.call(other_node, Swurm, :registered, [])
+      )
 
       Cluster.stop_node(c, target_node)
 
@@ -137,15 +160,11 @@ defmodule SwormClusterTest do
     } do
       [a, b] = Cluster.members(c)
 
-      wait_until(fn ->
-        match?([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
-      end)
+      until_match([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
 
       Cluster.stop_node(c, b)
 
-      wait_until(fn ->
-        match?([_], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
-      end)
+      until_match([_], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
     end
   end
 end

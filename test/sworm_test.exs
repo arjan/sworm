@@ -1,5 +1,6 @@
 defmodule SwormTest do
-  use ExUnit.Case, async: false
+  use SwormCase
+
   doctest Sworm
 
   setup do
@@ -93,9 +94,8 @@ defmodule SwormTest do
     assert [{"a", _}, {"b", _}] = Sworm.registered(TestSworm) |> Enum.sort()
 
     GenServer.stop(b)
-    Process.sleep(100)
 
-    assert [{"a", _}] = Sworm.registered(TestSworm)
+    until_match([{"a", _}], Sworm.registered(TestSworm))
   end
 
   test "register_name/3" do
@@ -131,7 +131,7 @@ defmodule SwormTest do
     Horde.Cluster.set_members(A.Registry, [A.Registry, B.Registry])
     Horde.Cluster.set_members(A.Supervisor, [A.Supervisor, B.Supervisor])
 
-    Process.sleep(200)
+    wait_until(fn -> not Process.alive?(pid_a) end)
 
     refute Process.alive?(pid_a)
     assert Process.alive?(pid_b)
@@ -139,8 +139,15 @@ defmodule SwormTest do
     assert([{"foo", ^pid_b}] = Sworm.registered(A))
     assert([{"foo", ^pid_b}] = Sworm.registered(B))
 
-    assert [{:undefined, _delegate, _, _}] = Horde.DynamicSupervisor.which_children(A.Supervisor)
-    assert [{:undefined, _delegate, _, _}] = Horde.DynamicSupervisor.which_children(B.Supervisor)
+    until_match(
+      [{:undefined, _delegate, _, _}],
+      Horde.DynamicSupervisor.which_children(A.Supervisor)
+    )
+
+    until_match(
+      [{:undefined, _delegate, _, _}],
+      Horde.DynamicSupervisor.which_children(B.Supervisor)
+    )
   end
 
   def delegates() do
@@ -195,7 +202,7 @@ defmodule SwormTest do
 
     on_exit(fn ->
       Process.sleep(50)
-      Process.exit(pid, :normal)
+      Process.exit(pid, :kill)
       Process.sleep(200)
     end)
   end
