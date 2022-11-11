@@ -2,6 +2,10 @@
 
 [![Build status](https://github.com/arjan/sworm/actions/workflows/test.yml/badge.svg)](https://github.com/arjan/sworm/actions/workflows/test.yml)
 [![Hex pm](https://img.shields.io/hexpm/v/sworm.svg?style=flat)](https://hex.pm/packages/sworm)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/sworm/)
+[![Total Download](https://img.shields.io/hexpm/dt/sworm.svg)](https://hex.pm/packages/sworm)
+[![License](https://img.shields.io/hexpm/l/sworm.svg)](https://github.com/arjan/sworm/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/arjan/sworm.svg)](https://github.com/arjan/sworm/commits/master)
 
 A combination of a global, distributed process registry and
 supervisor, rolled into one, friendly API.
