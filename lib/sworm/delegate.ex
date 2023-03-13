@@ -56,29 +56,25 @@ defmodule Sworm.Delegate do
           Logger.debug("pid update failed for #{inspect(name)}")
           init_bail(self_started, pid)
       end
-
-      {:ok, %State{pid: pid, name: name, sworm: sworm}}
     else
       {:error, {:already_registered, delegate}} ->
         Logger.debug(
           "already registered delegate for #{inspect(name)}, to #{inspect(delegate)}, bail out"
         )
 
-        with true <- node(delegate) == node(),
-             {:ok, pid} <- GenServer.call(delegate, :get_worker_pid) do
-          {:stop, {:already_started, pid}}
-        else
-          _ -> :ignore
-        end
+        {:ok, worker_pid} = GenServer.call(delegate, :get_worker_pid)
+        {:stop, {:shutdown, {:already_started, worker_pid}}}
     end
   end
 
-  defp init_bail(false, _pid), do: :ignore
-
-  defp init_bail(true, pid) do
+  defp init_bail(self_started, pid) do
     Process.unlink(pid)
-    Process.exit(pid, :normal)
-    :ignore
+
+    if self_started do
+      Process.exit(pid, :normal)
+    end
+
+    {:stop, {:shutdown, {:already_started, pid}}}
   end
 
   @impl true

@@ -1,6 +1,6 @@
 defmodule Sworm.Support.Helpers do
-  defmacro sworm_scenario(sworm, title, size \\ 2, do: block) do
-    opts = [cluster_size: size, boot_timeout: 20_000]
+  defmacro sworm_scenario(sworm, title, opts \\ [], do: block) do
+    opts = Keyword.merge([cluster_size: 2, boot_timeout: 20_000], opts)
 
     quote do
       scenario unquote(title), unquote(opts) do
@@ -8,9 +8,17 @@ defmodule Sworm.Support.Helpers do
           {:ok, _} = Application.ensure_all_started(:sworm)
           mod = unquote(sworm)
 
-          if mod != nil do
-            {:ok, pid} = mod.start_link()
-            Process.unlink(pid)
+          case unquote(sworm) do
+            nil ->
+              :ok
+
+            {m, f, a} ->
+              {:ok, pid} = apply(m, f, a)
+              Process.unlink(pid)
+
+            mod ->
+              {:ok, pid} = mod.start_link()
+              Process.unlink(pid)
           end
 
           :ok

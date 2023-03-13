@@ -34,12 +34,8 @@ defmodule Sworm.Main do
       pid when is_pid(pid) ->
         {:error, {:already_started, pid}}
 
-      {:error, _} = e ->
-        e
-
-      :ignore ->
-        # race lost
-        {:error, {:already_started, whereis_name(sworm, name)}}
+      {:error, {:shutdown, {:already_started, pid}}} ->
+        {:error, {:already_started, pid}}
     end
   end
 

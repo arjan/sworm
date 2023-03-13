@@ -71,30 +71,43 @@ defmodule SwormClusterTest do
     end
   end
 
-  sworm_scenario Swurm, "given a clean cluster for simultaneous registers" do
+  def custom_sworm() do
+    Swurm.start_link(delta_crdt_options: [sync_interval: 5000])
+  end
+
+  sworm_scenario {__MODULE__, :custom_sworm, []},
+                 "given a clean cluster for simultaneous registers",
+                 cluster_size: 5 do
     test "many simultaneous registers for the same name always result in a valid pid", %{
       cluster: c
     } do
-      [_, _] = Cluster.members(c)
+      [_, _, _, _, _] = Cluster.members(c)
+
+      n_start = 100
 
       results =
-        for n <- 1..20 do
+        for n <- 1..200 do
           node = Cluster.random_member(c)
 
           Task.async(fn ->
-            Cluster.call(node, Swurm, :start_many, ["hi_#{n}"])
+            Process.sleep(Enum.random(1..100))
+
+            Cluster.call(node, Swurm, :start_many, ["hi_#{n}", n_start])
             |> Enum.sort()
+            |> Enum.reverse()
           end)
         end
-        |> Task.await_many()
+        |> Task.await_many(20_000)
 
       for start_results <- results do
-        assert {:ok, pid} = List.last(start_results)
-        assert is_pid(pid)
-        assert {:error, {:already_started, ^pid}} = List.first(start_results)
+        [{:ok, pid} | rest] = start_results
+        assert length(rest) == n_start - 1
+        assert [{:error, {:already_started, ^pid}}] = Enum.uniq(rest)
       end
     end
+  end
 
+  sworm_scenario Swurm, "given another cluster for simultaneous registers", cluster_size: 2 do
     test "whereis_name always returns either a pid or undefined", %{
       cluster: c
     } do
