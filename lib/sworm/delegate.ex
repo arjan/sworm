@@ -25,17 +25,8 @@ defmodule Sworm.Delegate do
   def init({sworm, name, mfa_or_pid}) do
     Process.flag(:trap_exit, true)
 
-    with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, nil) do
-      {:ok, pid, self_started} =
-        case mfa_or_pid do
-          {m, f, a} ->
-            {:ok, pid} = apply(m, f, a)
-            {:ok, pid, true}
-
-          pid when is_pid(pid) ->
-            {:ok, pid, false}
-        end
-
+    with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:delegate, name}, nil),
+         {:ok, pid, self_started} <- ensure_worker(mfa_or_pid) do
       Process.link(pid)
 
       with {:ok, _} <- Horde.Registry.register(registry_name(sworm), {:worker, pid}, nil),
@@ -64,6 +55,9 @@ defmodule Sworm.Delegate do
 
         {:ok, worker_pid} = GenServer.call(delegate, :get_worker_pid)
         {:stop, {:shutdown, {:already_started, worker_pid}}}
+
+      {:error, reason} ->
+        {:stop, reason}
     end
   end
 
@@ -75,6 +69,16 @@ defmodule Sworm.Delegate do
     end
 
     {:stop, {:shutdown, {:already_started, pid}}}
+  end
+
+  defp ensure_worker(pid) when is_pid(pid) do
+    {:ok, pid, false}
+  end
+
+  defp ensure_worker({m, f, a}) do
+    with {:ok, pid} <- apply(m, f, a) do
+      {:ok, pid, true}
+    end
   end
 
   @impl true

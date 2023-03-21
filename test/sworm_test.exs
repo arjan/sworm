@@ -167,8 +167,6 @@ defmodule SwormTest do
       end)
     end
 
-    all = mailbox() |> Enum.reverse()
-
     assert [
              {:ok, p},
              {:error, {:already_started, p}},
@@ -180,30 +178,6 @@ defmodule SwormTest do
              {:error, {:already_started, p}},
              {:error, {:already_started, p}},
              {:error, {:already_started, p}}
-           ] = all
-  end
-
-  defp mailbox() do
-    mailbox([])
-  end
-
-  defp mailbox(rest) do
-    receive do
-      item -> mailbox([item | rest])
-    after
-      100 -> rest
-    end
-  end
-
-  ###
-
-  defp sworm(name) do
-    {:ok, pid} = Sworm.start_link(name)
-
-    on_exit(fn ->
-      Process.sleep(50)
-      Process.exit(pid, :kill)
-      Process.sleep(200)
-    end)
+           ] = mailbox()
   end
 end

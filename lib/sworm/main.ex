@@ -36,6 +36,9 @@ defmodule Sworm.Main do
 
       {:error, {:shutdown, {:already_started, pid}}} ->
         {:error, {:already_started, pid}}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
