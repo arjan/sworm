@@ -51,12 +51,11 @@ MFA.
 
 This way, any MFA can be used with Sworm like it can with Swarm, and
 does not need to be aware of it, because the delegate process handles
-name registration, process shutdown on name conflicts, and, in the
-near future, process handoff.
+name registration, process shutdown on name conflicts, and process handoff.
 
-## Node affinity / node black-/whitelisting
+## Node affinity / node deny-/allowlisting
 
-Contrarily to Swarm, Sworm does not have a black- or whitelisting
+Contrarily to Swarm, Sworm does not have a deny- or allowlisting
 mechanism. By design, each Sworm in the cluster only distributes
 processes among those nodes that explicitly have that particular sworm
 started in its supervision tree.
@@ -69,7 +68,8 @@ that the sworm itself is also running on, instead of assuming that the
 cluster is homogenous and processes can run on each node, like Swarm
 does.
 
-To use it, pass in a custom [`:distribution_strategy`][dist] option like this:
+For an even more finegrained control over process placement, you can pass in a
+custom [`:distribution_strategy`][dist] option on compile time, like this:
 
 ```elixir
 defmodule MyTemporaryProcesses do
@@ -181,7 +181,7 @@ by adding `sworm` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:sworm, "~> 0.1.0"}
+    {:sworm, "~> 0.1"}
   ]
 end
 ```
