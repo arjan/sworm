@@ -31,16 +31,18 @@ defmodule Sworm.Support.Helpers do
   end
 
   def wait_until(condition, timeout \\ 5_000) do
+    result = condition.()
+
     cond do
-      condition.() ->
-        :ok
+      result ->
+        result
 
       timeout <= 0 ->
         ExUnit.Assertions.flunk("Timeout reached waiting for condition")
 
       true ->
-        Process.sleep(100)
-        wait_until(condition, timeout - 100)
+        Process.sleep(50)
+        wait_until(condition, timeout - 50)
     end
   end
 

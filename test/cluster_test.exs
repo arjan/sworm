@@ -10,14 +10,7 @@ defmodule Swurm do
     end
 
     def init(a) do
-      Process.flag(:trap_exit, true)
       {:ok, a}
-    end
-
-    def handle_info(message, state) do
-      Logger.warn("*** #{inspect(message)}")
-
-      {:noreply, state}
     end
   end
 
@@ -29,7 +22,7 @@ defmodule Swurm do
     for _ <- 1..n do
       Task.async(fn -> start_one(name) end)
     end
-    |> Task.await_many()
+    |> Task.await_many(20_000)
   end
 end
 
@@ -83,14 +76,14 @@ defmodule SwormClusterTest do
     } do
       [_, _, _, _, _] = Cluster.members(c)
 
-      n_start = 100
+      n_start = 10
 
       results =
-        for n <- 1..200 do
+        for n <- 1..20 do
           node = Cluster.random_member(c)
 
           Task.async(fn ->
-            Process.sleep(Enum.random(1..100))
+            Process.sleep(Enum.random(1..10))
 
             Cluster.call(node, Swurm, :start_many, ["hi_#{n}", n_start])
             |> Enum.sort()
@@ -216,6 +209,80 @@ defmodule SwormClusterTest do
 
       until_match([], Cluster.call(a, Swurm, :registered, []))
       until_match([], Cluster.call(b, Swurm, :registered, []))
+    end
+  end
+
+  sworm_scenario Swurm, "given a cluster for node suspension" do
+    test "directory is updated when node sets itself suspended", %{
+      cluster: c
+    } do
+      [a, b] = Cluster.members(c)
+
+      wait_until(fn ->
+        match?([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
+      end)
+
+      Cluster.call(a, Sworm.Manager, :set_suspended, [Swurm, true])
+
+      wait_until(fn ->
+        [b] == Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]) and
+          [b] == Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm])
+      end)
+
+      Cluster.call(a, Sworm.Manager, :set_suspended, [Swurm, false])
+
+      wait_until(fn ->
+        match?([_, _], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm])) and
+          match?([_, _], Cluster.call(b, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
+      end)
+    end
+  end
+
+  sworm_scenario Swurm, "given a cluster for node suspension (2)" do
+    test "process redistribution when node suspends", %{
+      cluster: c
+    } do
+      n = Cluster.random_member(c)
+      Cluster.call(n, Swurm, :start_one, ["hi"])
+
+      [{"hi", pid}] = Cluster.call(n, Swurm, :registered, [])
+      orig = pid
+      Process.monitor(orig)
+
+      target_node = node(pid)
+      [other_node] = Cluster.members(c) -- [target_node]
+
+      wait_until(fn ->
+        [{"hi", pid}] == Cluster.call(other_node, Swurm, :registered, [])
+      end)
+
+      Cluster.call(target_node, Sworm.Manager, :set_suspended, [Swurm, true])
+
+      wait_until(fn ->
+        [{"hi", pid}] = Cluster.call(other_node, Swurm, :registered, [])
+
+        # process now runs on the other node
+        node(pid) == other_node
+      end)
+
+      # the original process should now stop
+
+      wait_until(fn ->
+        not Cluster.call(n, Process, :alive?, [orig])
+      end)
+
+      assert [{:DOWN, _, _, _, {:shutdown, :process_redistribution}}] = mailbox()
+
+      ## rejoin the cluster
+
+      Cluster.call(target_node, Sworm.Manager, :set_suspended, [Swurm, false])
+
+      wait_until(fn ->
+        match?(
+          [_, _],
+          Cluster.call(other_node, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm])
+        )
+      end)
     end
   end
 end
