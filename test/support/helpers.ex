@@ -17,7 +17,8 @@ defmodule Sworm.Support.Helpers do
               Process.unlink(pid)
 
             mod ->
-              {:ok, pid} = mod.start_link()
+              opts = [delta_crdt_options: [sync_interval: 50]]
+              {:ok, pid} = mod.start_link(opts)
               Process.unlink(pid)
           end
 

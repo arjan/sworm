@@ -51,7 +51,7 @@ defmodule SwormClusterTest do
       # settle
       wait_until(fn ->
         match?(
-          [[{"hi", _}], [{"hi", _}]],
+          [[{"hi", p}], [{"hi", p}]],
           Cluster.members(c) |> Enum.map(fn n -> Cluster.call(n, Swurm, :registered, []) end)
         )
       end)
@@ -178,6 +178,44 @@ defmodule SwormClusterTest do
       Cluster.stop_node(c, b)
 
       until_match([_], Cluster.call(a, Sworm.DirectoryManager, :nodes_for_sworm, [Swurm]))
+    end
+  end
+
+  require Logger
+
+  sworm_scenario Swurm, "given a partitioned cluster" do
+    test "resolves name conflicts", %{cluster: c} do
+      [a, b] = Cluster.members(c)
+      Cluster.partition(c, [[a], [b]])
+
+      assert {:ok, pid_a} = Cluster.call(a, Swurm, :start_one, ["hi"])
+      assert {:ok, pid_b} = Cluster.call(b, Swurm, :start_one, ["hi"])
+
+      assert pid_a != pid_b
+
+      Process.sleep(500)
+
+      Cluster.heal(c)
+
+      wait_until(fn ->
+        case {Cluster.call(a, Swurm, :registered, []), Cluster.call(b, Swurm, :registered, [])} do
+          {[{"hi", pid}], [{"hi", pid}]} ->
+            true
+
+          _ ->
+            false
+        end
+      end)
+
+      # we now have only one pid
+      [{"hi", pid}] = Cluster.call(a, Swurm, :registered, [])
+      [{"hi", ^pid}] = Cluster.call(b, Swurm, :registered, [])
+
+      # stop it before exiting
+      GenServer.stop(pid)
+
+      until_match([], Cluster.call(a, Swurm, :registered, []))
+      until_match([], Cluster.call(b, Swurm, :registered, []))
     end
   end
 end

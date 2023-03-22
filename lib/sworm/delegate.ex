@@ -114,8 +114,9 @@ defmodule Sworm.Delegate do
     {:stop, :shutdown, state}
   end
 
-  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner} = r}, state) do
-    {:stop, r, state}
+  def handle_info({:EXIT, _, {:name_conflict, {_name, _}, _reg, _winner}}, state) do
+    Horde.DynamicSupervisor.terminate_child(supervisor_name(state.sworm), self())
+    {:stop, :normal, state}
   end
 
   def handle_info({:EXIT, _, reason}, state) do

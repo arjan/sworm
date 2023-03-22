@@ -13,11 +13,13 @@ defmodule SwormTest do
   defmodule TestServer do
     use GenServer
 
-    def start_link() do
-      GenServer.start_link(__MODULE__, [])
+    def start_link(arg \\ []) do
+      GenServer.start_link(__MODULE__, arg)
     end
 
-    def init([]), do: {:ok, nil}
+    def init(_arg) do
+      {:ok, nil}
+    end
 
     def handle_call(:x, _from, state) do
       {:reply, :y, state}
@@ -117,6 +119,8 @@ defmodule SwormTest do
     assert [_] = delegates()
   end
 
+  require Logger
+
   test "remove from supervisor on name conflict" do
     # Simulate a network partition healing, 2 processes registered on
     # different nodes are reconciled.
@@ -124,9 +128,9 @@ defmodule SwormTest do
     sworm(A)
     sworm(B)
 
-    assert {:ok, pid_a} = Sworm.register_name(A, "foo", TestServer, :start_link, [])
+    assert {:ok, pid_a} = Sworm.register_name(A, "foo", TestServer, :start_link, ["foo.A"])
     Process.sleep(10)
-    assert {:ok, pid_b} = Sworm.register_name(B, "foo", TestServer, :start_link, [])
+    assert {:ok, pid_b} = Sworm.register_name(B, "foo", TestServer, :start_link, ["foo.B"])
 
     Horde.Cluster.set_members(A.Registry, [A.Registry, B.Registry])
     Horde.Cluster.set_members(A.Supervisor, [A.Supervisor, B.Supervisor])
@@ -139,11 +143,13 @@ defmodule SwormTest do
     assert([{"foo", ^pid_b}] = Sworm.registered(A))
     assert([{"foo", ^pid_b}] = Sworm.registered(B))
 
+    # removed from A.Supervisor
     until_match(
-      [{:undefined, _delegate, _, _}],
+      [],
       Horde.DynamicSupervisor.which_children(A.Supervisor)
     )
 
+    # still exists on B.Supervisor
     until_match(
       [{:undefined, _delegate, _, _}],
       Horde.DynamicSupervisor.which_children(B.Supervisor)
